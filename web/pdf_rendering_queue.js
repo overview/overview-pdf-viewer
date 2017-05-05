@@ -32,7 +32,6 @@ class PDFRenderingQueue {
     this.onIdle = null;
     this.highestPriorityPage = null;
     this.idleTimeout = null;
-    this.printing = false;
     this.isThumbnailViewEnabled = false;
   }
 
@@ -76,11 +75,6 @@ class PDFRenderingQueue {
       if (this.pdfThumbnailViewer.forceRendering()) {
         return;
       }
-    }
-
-    if (this.printing) {
-      // If printing is currently ongoing do not reschedule cleanup.
-      return;
     }
 
     if (this.onIdle) {

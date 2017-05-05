@@ -94,7 +94,6 @@ var PDFViewerApplication = {
   appConfig: null,
   pdfDocument: null,
   pdfLoadingTask: null,
-  printService: null,
   /** @type {PDFViewer} */
   pdfViewer: null,
   /** @type {PDFThumbnailViewer} */
@@ -138,7 +137,6 @@ var PDFViewerApplication = {
     renderer: 'canvas',
     enhanceTextSelection: false,
     renderInteractiveForms: false,
-    enablePrintAutoRotate: false,
   },
   isViewerEmbedded: (window.parent !== window),
   url: '',
@@ -248,9 +246,6 @@ var PDFViewerApplication = {
       preferences.get('disablePageLabels').then(function resolved(value) {
         viewerPrefs['disablePageLabels'] = value;
       }),
-      preferences.get('enablePrintAutoRotate').then(function resolved(value) {
-        viewerPrefs['enablePrintAutoRotate'] = value;
-      }),
     ]).catch(function (reason) { });
   },
 
@@ -289,7 +284,6 @@ var PDFViewerApplication = {
         renderer: self.viewerPrefs['renderer'],
         enhanceTextSelection: self.viewerPrefs['enhanceTextSelection'],
         renderInteractiveForms: self.viewerPrefs['renderInteractiveForms'],
-        enablePrintAutoRotate: self.viewerPrefs['enablePrintAutoRotate'],
       });
       pdfRenderingQueue.setViewer(self.pdfViewer);
       pdfLinkService.setViewer(self.pdfViewer);
@@ -422,14 +416,6 @@ var PDFViewerApplication = {
 
   get page() {
     return this.pdfViewer.currentPageNumber;
-  },
-
-  get printing() {
-    return !!this.printService;
-  },
-
-  get supportsPrinting() {
-    return PDFPrintServiceFactory.instance.supportsPrinting;
   },
 
   get supportsFullscreen() {
@@ -995,28 +981,6 @@ var PDFViewerApplication = {
                                  pdfViewer.currentPageLabel);
     });
 
-    pagesPromise.then(function() {
-      if (self.supportsPrinting) {
-        pdfDocument.getJavaScript().then(function(javaScript) {
-          if (javaScript.length) {
-            console.warn('Warning: JavaScript is not supported');
-            self.fallback(UNSUPPORTED_FEATURES.javaScript);
-          }
-          // Hack to support auto printing.
-          var regex = /\bprint\s*\(/;
-          for (var i = 0, ii = javaScript.length; i < ii; i++) {
-            var js = javaScript[i];
-            if (js && regex.test(js)) {
-              setTimeout(function() {
-                window.print();
-              });
-              return;
-            }
-          }
-        });
-      }
-    });
-
     Promise.all([onePageRendered, animationStarted]).then(function() {
       pdfDocument.getOutline().then(function(outline) {
         self.pdfOutlineViewer.render({ outline, });
@@ -1139,51 +1103,9 @@ var PDFViewerApplication = {
   },
 
   forceRendering: function pdfViewForceRendering() {
-    this.pdfRenderingQueue.printing = this.printing;
     this.pdfRenderingQueue.isThumbnailViewEnabled =
       this.pdfSidebar.isThumbnailViewVisible;
     this.pdfRenderingQueue.renderHighestPriority();
-  },
-
-  beforePrint: function pdfViewSetupBeforePrint() {
-    if (this.printService) {
-      // There is no way to suppress beforePrint/afterPrint events,
-      // but PDFPrintService may generate double events -- this will ignore
-      // the second event that will be coming from native window.print().
-      return;
-    }
-
-    if (!this.supportsPrinting) {
-      var printMessage = mozL10n.get('printing_not_supported', null,
-          'Warning: Printing is not fully supported by this browser.');
-      this.error(printMessage);
-      return;
-    }
-
-    // The beforePrint is a sync method and we need to know layout before
-    // returning from this method. Ensure that we can get sizes of the pages.
-    if (!this.pdfViewer.pageViewsReady) {
-      var notReadyMessage = mozL10n.get('printing_not_ready', null,
-          'Warning: The PDF is not fully loaded for printing.');
-      window.alert(notReadyMessage);
-      return;
-    }
-
-    var pagesOverview = this.pdfViewer.getPagesOverview();
-    var printContainer = this.appConfig.printContainer;
-    var printService = PDFPrintServiceFactory.instance.createPrintService(
-      this.pdfDocument, pagesOverview, printContainer);
-    this.printService = printService;
-    this.forceRendering();
-
-    printService.layout();
-
-    if (typeof PDFJSDev !== 'undefined' &&
-        PDFJSDev.test('FIREFOX || MOZCENTRAL')) {
-      this.externalServices.reportTelemetry({
-        type: 'print'
-      });
-    }
   },
 
   // Whether all pages of the PDF have the same width and height.
@@ -1197,14 +1119,6 @@ var PDFViewerApplication = {
       }
     }
     return true;
-  },
-
-  afterPrint: function pdfViewSetupAfterPrint() {
-    if (this.printService) {
-      this.printService.destroy();
-      this.printService = null;
-    }
-    this.forceRendering();
   },
 
   rotatePages: function pdfViewRotatePages(delta) {
@@ -1230,8 +1144,6 @@ var PDFViewerApplication = {
 
     eventBus.on('resize', webViewerResize);
     eventBus.on('hashchange', webViewerHashchange);
-    eventBus.on('beforeprint', this.beforePrint.bind(this));
-    eventBus.on('afterprint', this.afterPrint.bind(this));
     eventBus.on('pagerendered', webViewerPageRendered);
     eventBus.on('textlayerrendered', webViewerTextLayerRendered);
     eventBus.on('updateviewarea', webViewerUpdateViewarea);
@@ -1242,7 +1154,6 @@ var PDFViewerApplication = {
     eventBus.on('namedaction', webViewerNamedAction);
     eventBus.on('presentationmodechanged', webViewerPresentationModeChanged);
     eventBus.on('presentationmode', webViewerPresentationMode);
-    eventBus.on('print', webViewerPrint);
     eventBus.on('download', webViewerDownload);
     eventBus.on('firstpage', webViewerFirstPage);
     eventBus.on('lastpage', webViewerLastPage);
@@ -1276,12 +1187,6 @@ var PDFViewerApplication = {
       eventBus.dispatch('hashchange', {
         hash: document.location.hash.substring(1),
       });
-    });
-    window.addEventListener('beforeprint', function windowBeforePrint() {
-      eventBus.dispatch('beforeprint');
-    });
-    window.addEventListener('afterprint', function windowAfterPrint() {
-      eventBus.dispatch('afterprint');
     });
     if (typeof PDFJSDev === 'undefined' || PDFJSDev.test('GENERIC')) {
       window.addEventListener('change', function windowChange(evt) {
@@ -1445,11 +1350,6 @@ function webViewerInitialized() {
       console.warn(mozL10n.get('web_fonts_disabled', null,
         'Web fonts are disabled: unable to use embedded PDF fonts.'));
     }
-  }
-
-  if (!PDFViewerApplication.supportsPrinting) {
-    appConfig.toolbar.print.classList.add('hidden');
-    appConfig.secondaryToolbar.printButton.classList.add('hidden');
   }
 
   if (!PDFViewerApplication.supportsFullscreen) {
@@ -1732,9 +1632,6 @@ if (typeof PDFJSDev === 'undefined' || PDFJSDev.test('GENERIC')) {
 
 function webViewerPresentationMode() {
   PDFViewerApplication.requestPresentationMode();
-}
-function webViewerPrint() {
-  window.print();
 }
 function webViewerDownload() {
   PDFViewerApplication.download();
@@ -2178,18 +2075,7 @@ localized.then(function webViewerLocalized() {
   document.getElementsByTagName('html')[0].dir = mozL10n.getDirection();
 });
 
-/* Abstract factory for the print service. */
-var PDFPrintServiceFactory = {
-  instance: {
-    supportsPrinting: false,
-    createPrintService() {
-      throw new Error('Not implemented: createPrintService');
-    }
-  }
-};
-
 export {
   PDFViewerApplication,
   DefaultExternalServices,
-  PDFPrintServiceFactory,
 };

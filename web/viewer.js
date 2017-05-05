@@ -39,19 +39,11 @@ var pdfjsWebApp;
 if (typeof PDFJSDev !== 'undefined' && PDFJSDev.test('PRODUCTION')) {
   pdfjsWebApp = require('./app.js');
 }
-
-if (typeof PDFJSDev !== 'undefined' && PDFJSDev.test('FIREFOX || MOZCENTRAL')) {
-  require('./firefoxcom.js');
-  require('./firefox_print_service.js');
-}
 if (typeof PDFJSDev !== 'undefined' && PDFJSDev.test('GENERIC')) {
   require('./genericcom.js');
 }
 if (typeof PDFJSDev !== 'undefined' && PDFJSDev.test('CHROME')) {
   require('./chromecom.js');
-}
-if (typeof PDFJSDev !== 'undefined' && PDFJSDev.test('CHROME || GENERIC')) {
-  require('./pdf_print_service.js');
 }
 
 function getViewerConfiguration() {
@@ -72,7 +64,6 @@ function getViewerConfiguration() {
       zoomIn: document.getElementById('zoomIn'),
       zoomOut: document.getElementById('zoomOut'),
       viewFind: document.getElementById('viewFind'),
-      print: document.getElementById('print'),
       presentationModeButton: document.getElementById('presentationMode'),
       download: document.getElementById('download'),
       viewBookmark: document.getElementById('viewBookmark'),
@@ -84,7 +75,6 @@ function getViewerConfiguration() {
         document.getElementById('secondaryToolbarButtonContainer'),
       presentationModeButton:
         document.getElementById('secondaryPresentationMode'),
-      printButton: document.getElementById('secondaryPrint'),
       downloadButton: document.getElementById('secondaryDownload'),
       viewBookmarkButton: document.getElementById('secondaryViewBookmark'),
       firstPageButton: document.getElementById('firstPage'),
@@ -161,7 +151,6 @@ function getViewerConfiguration() {
       moreInfoButton: document.getElementById('errorShowMore'),
       lessInfoButton: document.getElementById('errorShowLess'),
     },
-    printContainer: document.getElementById('printContainer'),
     debuggerScriptPath: './debugger.js',
     defaultUrl: DEFAULT_URL
   };
@@ -173,7 +162,6 @@ function webViewerLoad() {
     Promise.all([
       SystemJS.import('pdfjs-web/app'),
       SystemJS.import('pdfjs-web/genericcom'),
-      SystemJS.import('pdfjs-web/pdf_print_service'),
     ]).then(function (modules) {
       var app = modules[0];
       window.PDFViewerApplication = app.PDFViewerApplication;

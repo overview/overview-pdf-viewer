@@ -144,10 +144,6 @@ var Toolbar = (function ToolbarClosure() {
         eventBus.dispatch('presentationmode');
       });
 
-      items.print.addEventListener('click', function (e) {
-        eventBus.dispatch('print');
-      });
-
       items.download.addEventListener('click', function (e) {
         eventBus.dispatch('download');
       });

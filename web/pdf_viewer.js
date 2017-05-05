@@ -51,9 +51,6 @@ var DEFAULT_CACHE_SIZE = 10;
  *   text selection behaviour. The default is `false`.
  * @property {boolean} renderInteractiveForms - (optional) Enables rendering of
  *   interactive form elements. The default is `false`.
- * @property {boolean} enablePrintAutoRotate - (optional) Enables automatic
- *   rotation of pages whose orientation differ from the first page upon
- *   printing. The default is `false`.
  * @property {string} renderer - 'canvas' or 'svg'. The default is 'canvas'.
  */
 
@@ -112,7 +109,6 @@ var PDFViewer = (function pdfViewer() {
     this.removePageBorders = options.removePageBorders || false;
     this.enhanceTextSelection = options.enhanceTextSelection || false;
     this.renderInteractiveForms = options.renderInteractiveForms || false;
-    this.enablePrintAutoRotate = options.enablePrintAutoRotate || false;
     this.renderer = options.renderer || RendererType.CANVAS;
 
     this.defaultRenderingQueue = !options.renderingQueue;
@@ -929,20 +925,7 @@ var PDFViewer = (function pdfViewer() {
           rotation: viewport.rotation,
         };
       });
-      if (!this.enablePrintAutoRotate) {
-        return pagesOverview;
-      }
-      var isFirstPagePortrait = isPortraitOrientation(pagesOverview[0]);
-      return pagesOverview.map(function (size) {
-        if (isFirstPagePortrait === isPortraitOrientation(size)) {
-          return size;
-        }
-        return {
-          width: size.height,
-          height: size.width,
-          rotation: (size.rotation + 90) % 360,
-        };
-      });
+      return pagesOverview;
     },
   };
 
