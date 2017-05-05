@@ -21,6 +21,7 @@ import {
 } from './ui_utils';
 import { PDFRenderingQueue, RenderingStates } from './pdf_rendering_queue';
 import { AnnotationLayerBuilder } from './annotation_layer_builder';
+import { NoteLayerBuilder } from './note_layer_builder';
 import { getGlobalEventBus } from './dom_events';
 import { PDFPageView } from './pdf_page_view';
 import { SimpleLinkService } from './pdf_link_service';
@@ -106,6 +107,7 @@ var PDFViewer = (function pdfViewer() {
     this.eventBus = options.eventBus || getGlobalEventBus();
     this.linkService = options.linkService || new SimpleLinkService();
     this.downloadManager = options.downloadManager || null;
+    this.noteStore = options.noteStore || null;
     this.removePageBorders = options.removePageBorders || false;
     this.enhanceTextSelection = options.enhanceTextSelection || false;
     this.renderInteractiveForms = options.renderInteractiveForms || false;
@@ -361,6 +363,7 @@ var PDFViewer = (function pdfViewer() {
             renderingQueue: this.renderingQueue,
             textLayerFactory,
             annotationLayerFactory: this,
+            noteLayerFactory: this,
             enhanceTextSelection: this.enhanceTextSelection,
             renderInteractiveForms: this.renderInteractiveForms,
             renderer: this.renderer,
@@ -905,6 +908,19 @@ var PDFViewer = (function pdfViewer() {
         renderInteractiveForms,
         linkService: this.linkService,
         downloadManager: this.downloadManager
+      });
+    },
+
+    /**
+     * @param {HTMLDivElement} pageDiv
+     * @param {PDFPage} pdfPage
+     * @returns {NoteLayerBuilder}
+     */
+    createNoteLayerBuilder(pageDiv, pdfPage) {
+      return new NoteLayerBuilder({
+        pageDiv,
+        pdfPage,
+        noteStore: this.noteStore
       });
     },
 

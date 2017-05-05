@@ -119,3 +119,15 @@ class IPDFAnnotationLayerFactory {
   createAnnotationLayerBuilder(pageDiv, pdfPage,
                                renderInteractiveForms = false) {}
 }
+
+/**
+ * @interface
+ */
+class INoteLayerFactory {
+  /**
+   * @param {HTMLDivElement} pageDiv
+   * @param {PDFPage} pdfPage
+   * @returns {NoteLayerBuilder}
+   */
+  createNoteLayerBuilder(pageDiv, pdfPage) {}
+}

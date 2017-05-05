@@ -36,6 +36,7 @@ var TEXT_LAYER_RENDER_DELAY = 200; // ms
  * @property {PDFRenderingQueue} renderingQueue - The rendering queue object.
  * @property {IPDFTextLayerFactory} textLayerFactory
  * @property {IPDFAnnotationLayerFactory} annotationLayerFactory
+ * @property {INoteLayerFactory} noteLayerFactory
  * @property {boolean} enhanceTextSelection - Turns on the text selection
  *   enhancement. The default is `false`.
  * @property {boolean} renderInteractiveForms - Turns on rendering of
@@ -60,6 +61,7 @@ var PDFPageView = (function PDFPageViewClosure() {
     var renderingQueue = options.renderingQueue;
     var textLayerFactory = options.textLayerFactory;
     var annotationLayerFactory = options.annotationLayerFactory;
+    var noteLayerFactory = options.noteLayerFactory;
     var enhanceTextSelection = options.enhanceTextSelection || false;
     var renderInteractiveForms = options.renderInteractiveForms || false;
 
@@ -79,6 +81,7 @@ var PDFPageView = (function PDFPageViewClosure() {
     this.renderingQueue = renderingQueue;
     this.textLayerFactory = textLayerFactory;
     this.annotationLayerFactory = annotationLayerFactory;
+    this.noteLayerFactory = noteLayerFactory;
     this.renderer = options.renderer || RendererType.CANVAS;
 
     this.paintTask = null;
@@ -95,6 +98,7 @@ var PDFPageView = (function PDFPageViewClosure() {
     this.zoomLayer = null;
 
     this.annotationLayer = null;
+    this.noteLayer = null;
 
     var div = document.createElement('div');
     div.className = 'page';
@@ -485,6 +489,15 @@ var PDFPageView = (function PDFPageViewClosure() {
         }
         this.annotationLayer.render(this.viewport, 'display');
       }
+
+      if (this.noteLayerFactory) {
+        if (!this.noteLayer) {
+          this.noteLayer = this.noteLayerFactory.
+            createNoteLayerBuilder(div, pdfPage);
+        }
+        this.noteLayer.render(this.viewport, 'display');
+      }
+
       div.setAttribute('data-loaded', true);
 
       if (this.onBeforeDraw) {

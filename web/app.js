@@ -31,6 +31,7 @@ import { PDFSidebar, SidebarView } from './pdf_sidebar';
 import { PDFViewer, PresentationModeState } from './pdf_viewer';
 import { getGlobalEventBus } from './dom_events';
 import { HandTool } from './hand_tool';
+import { NoteStore } from './note_store';
 import { OverlayManager } from './overlay_manager';
 import { PasswordPrompt } from './password_prompt';
 import { PDFDocumentProperties } from './pdf_document_properties';
@@ -105,6 +106,8 @@ var PDFViewerApplication = {
   store: null,
   /** @type {DownloadManager} */
   downloadManager: null,
+  /** @type {NoteStore} */
+  noteStore: null,
   /** @type {Preferences} */
   preferences: null,
   /** @type {Toolbar} */
@@ -255,6 +258,9 @@ var PDFViewerApplication = {
       var downloadManager = self.externalServices.createDownloadManager();
       self.downloadManager = downloadManager;
 
+      var noteStore = new NoteStore();
+      self.noteStore = noteStore;
+
       var container = appConfig.mainContainer;
       var viewer = appConfig.viewerContainer;
       self.pdfViewer = new PDFViewer({
@@ -264,6 +270,7 @@ var PDFViewerApplication = {
         renderingQueue: pdfRenderingQueue,
         linkService: pdfLinkService,
         downloadManager,
+        noteStore,
         renderer: self.viewerPrefs['renderer'],
         enhanceTextSelection: self.viewerPrefs['enhanceTextSelection'],
         renderInteractiveForms: self.viewerPrefs['renderInteractiveForms'],

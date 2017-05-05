@@ -39,7 +39,6 @@ var webpackStream = require('webpack-stream');
 var vinyl = require('vinyl-fs');
 
 var BUILD_DIR = 'build/';
-var L10N_DIR = 'l10n/';
 var TEST_DIR = 'test/';
 
 var BASELINE_DIR = BUILD_DIR + 'baseline/';
@@ -52,9 +51,10 @@ var SRC_DIR = 'src/';
 var LIB_DIR = BUILD_DIR + 'lib/';
 var DIST_DIR = BUILD_DIR + 'dist/';
 var COMMON_WEB_FILES = [
-  'web/images/*.{png,svg,gif,cur}',
-  'web/debugger.js'
+  'web/images/*.{png,svg,gif,cur}'
 ];
+
+var DIST_REPO_URL = 'https://github.com/mozilla/pdfjs-dist';
 
 var builder = require('./external/builder/builder.js');
 
@@ -491,9 +491,6 @@ gulp.task('generic', ['buildnumber'], function () {
     gulp.src(COMMON_WEB_FILES, {base: 'web/'})
         .pipe(gulp.dest(GENERIC_DIR + 'web')),
     gulp.src('LICENSE').pipe(gulp.dest(GENERIC_DIR)),
-    gulp.src([
-      'external/webL10n/l10n.js'
-    ]).pipe(gulp.dest(GENERIC_DIR + 'web')),
     gulp.src(['external/bcmaps/*.bcmap', 'external/bcmaps/LICENSE'],
              {base: 'external/bcmaps'})
         .pipe(gulp.dest(GENERIC_DIR + 'web/cmaps')),
@@ -569,7 +566,6 @@ gulp.task('minified-pre', ['buildnumber'], function () {
 
 gulp.task('minified-post', ['minified-pre'], function () {
   var viewerFiles = [
-    'external/webL10n/l10n.js',
     MINIFIED_DIR + BUILD_DIR + 'pdf.js',
     MINIFIED_DIR + '/web/viewer.js'
   ];
@@ -593,7 +589,6 @@ gulp.task('minified-post', ['minified-pre'], function () {
   console.log('### Cleaning js files');
 
   fs.unlinkSync(MINIFIED_DIR + '/web/viewer.js');
-  fs.unlinkSync(MINIFIED_DIR + '/web/debugger.js');
   fs.unlinkSync(MINIFIED_DIR + '/build/pdf.js');
   fs.unlinkSync(MINIFIED_DIR + '/build/pdf.worker.js');
   fs.renameSync(MINIFIED_DIR + '/build/pdf.min.js',
@@ -674,6 +669,119 @@ gulp.task('lib', ['buildnumber'], function () {
 
 gulp.task('dist-pre',
   ['generic', 'singlefile', 'components', 'lib', 'minified']);
+
+gulp.task('dist-repo-prepare', ['dist-pre'], function () {
+  var VERSION = getVersionJSON().version;
+
+  console.log();
+  console.log('### Cloning baseline distribution');
+
+  rimraf.sync(DIST_DIR);
+  mkdirp.sync(DIST_DIR);
+  safeSpawnSync('git', ['clone', '--depth', '1', DIST_REPO_URL, DIST_DIR]);
+
+  console.log();
+  console.log('### Overwriting all files');
+  rimraf.sync(path.join(DIST_DIR, '*'));
+
+  // Rebuilding manifests
+  var DIST_NAME = 'pdfjs-dist';
+  var DIST_DESCRIPTION = 'Generic build of Mozilla\'s PDF.js library.';
+  var DIST_KEYWORDS = ['Mozilla', 'pdf', 'pdf.js'];
+  var DIST_HOMEPAGE = 'http://mozilla.github.io/pdf.js/';
+  var DIST_BUGS_URL = 'https://github.com/mozilla/pdf.js/issues';
+  var DIST_LICENSE = 'Apache-2.0';
+  var npmManifest = {
+    name: DIST_NAME,
+    version: VERSION,
+    main: 'build/pdf.js',
+    description: DIST_DESCRIPTION,
+    keywords: DIST_KEYWORDS,
+    homepage: DIST_HOMEPAGE,
+    bugs: DIST_BUGS_URL,
+    license: DIST_LICENSE,
+    dependencies: {
+      'node-ensure': '^0.0.0', // shim for node for require.ensure
+      'worker-loader': '^0.8.0', // used in external/dist/webpack.json
+    },
+    browser: {
+      'node-ensure': false
+    },
+    format: 'amd', // to not allow system.js to choose 'cjs'
+    repository: {
+      type: 'git',
+      url: DIST_REPO_URL
+    },
+  };
+  var packageJsonSrc =
+    createStringSource('package.json', JSON.stringify(npmManifest, null, 2));
+  var bowerManifest = {
+    name: DIST_NAME,
+    version: VERSION,
+    main: [
+      'build/pdf.js',
+      'build/pdf.worker.js',
+    ],
+    ignore: [],
+    keywords: DIST_KEYWORDS,
+  };
+  var bowerJsonSrc =
+    createStringSource('bower.json', JSON.stringify(bowerManifest, null, 2));
+
+  return merge([
+    packageJsonSrc.pipe(gulp.dest(DIST_DIR)),
+    bowerJsonSrc.pipe(gulp.dest(DIST_DIR)),
+    vinyl.src('external/dist/**/*',
+              {base: 'external/dist', stripBOM: false})
+         .pipe(gulp.dest(DIST_DIR)),
+    gulp.src(GENERIC_DIR + 'LICENSE')
+        .pipe(gulp.dest(DIST_DIR)),
+    gulp.src(GENERIC_DIR + 'web/cmaps/**/*',
+             {base: GENERIC_DIR + 'web'})
+        .pipe(gulp.dest(DIST_DIR)),
+    gulp.src([
+      GENERIC_DIR + 'build/pdf.js',
+      GENERIC_DIR + 'build/pdf.js.map',
+      GENERIC_DIR + 'build/pdf.worker.js',
+      GENERIC_DIR + 'build/pdf.worker.js.map',
+      SINGLE_FILE_DIR + 'build/pdf.combined.js',
+      SINGLE_FILE_DIR + 'build/pdf.combined.js.map',
+      SRC_DIR + 'pdf.worker.entry.js',
+    ]).pipe(gulp.dest(DIST_DIR + 'build/')),
+    gulp.src(MINIFIED_DIR + 'build/pdf.js')
+        .pipe(rename('pdf.min.js'))
+        .pipe(gulp.dest(DIST_DIR + 'build/')),
+    gulp.src(MINIFIED_DIR + 'build/pdf.worker.js')
+        .pipe(rename('pdf.worker.min.js'))
+        .pipe(gulp.dest(DIST_DIR + 'build/')),
+    gulp.src(COMPONENTS_DIR + '**/*', {base: COMPONENTS_DIR})
+        .pipe(gulp.dest(DIST_DIR + 'web/')),
+    gulp.src(LIB_DIR + '**/*', {base: LIB_DIR})
+        .pipe(gulp.dest(DIST_DIR + 'lib/')),
+  ]);
+});
+
+gulp.task('dist-repo-git', ['dist-repo-prepare'], function () {
+  var VERSION = getVersionJSON().version;
+
+  console.log();
+  console.log('### Committing changes');
+
+  var reason = process.env['PDFJS_UPDATE_REASON'];
+  var message = 'PDF.js version ' + VERSION + (reason ? ' - ' + reason : '');
+  safeSpawnSync('git', ['add', '*'], {cwd: DIST_DIR});
+  safeSpawnSync('git', ['commit', '-am', message], {cwd: DIST_DIR});
+  safeSpawnSync('git', ['tag', '-a', 'v' + VERSION, '-m', message],
+                {cwd: DIST_DIR});
+
+  console.log();
+  console.log('Done. Push with');
+  console.log('  cd ' + DIST_DIR + '; ' +
+              'git push --tags ' + DIST_REPO_URL + ' master');
+  console.log();
+});
+
+gulp.task('dist', ['dist-repo-git']);
 
 gulp.task('publish', ['generic'], function (done) {
   var version = JSON.parse(

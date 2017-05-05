@@ -21,6 +21,7 @@ var pdfjsWebPDFPageView = require('./pdf_page_view.js');
 var pdfjsWebPDFLinkService = require('./pdf_link_service.js');
 var pdfjsWebTextLayerBuilder = require('./text_layer_builder.js');
 var pdfjsWebAnnotationLayerBuilder = require('./annotation_layer_builder.js');
+var pdfjsWebNoteLayerBuilder = require('./note_layer_builder.js');
 var pdfjsWebPDFHistory = require('./pdf_history.js');
 var pdfjsWebPDFFindController = require('./pdf_find_controller.js');
 var pdfjsWebUIUtils = require('./ui_utils.js');
@@ -36,6 +37,7 @@ PDFJS.DefaultTextLayerFactory =
   pdfjsWebTextLayerBuilder.DefaultTextLayerFactory;
 PDFJS.AnnotationLayerBuilder =
   pdfjsWebAnnotationLayerBuilder.AnnotationLayerBuilder;
+PDFJS.NoteLayerBuilder = pdfjsWebNoteLayerBuilder.NoteLayerBuilder;
 PDFJS.DefaultAnnotationLayerFactory =
   pdfjsWebAnnotationLayerBuilder.DefaultAnnotationLayerFactory;
 PDFJS.PDFHistory = pdfjsWebPDFHistory.PDFHistory;
