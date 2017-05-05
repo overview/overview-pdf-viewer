@@ -25,6 +25,7 @@ import { EventBus, NullL10n, ProgressBar } from "./ui_utils.js";
 import { PDFLinkService, SimpleLinkService } from "./pdf_link_service.js";
 import { DownloadManager } from "./download_manager.js";
 import { GenericL10n } from "./genericl10n.js";
+import { NoteLayerBuilder } from "./note_layer_builder.js";
 import { PDFFindController } from "./pdf_find_controller.js";
 import { PDFHistory } from "./pdf_history.js";
 import { PDFPageView } from "./pdf_page_view.js";
@@ -45,6 +46,7 @@ export {
   TextLayerBuilder,
   DefaultTextLayerFactory,
   AnnotationLayerBuilder,
+  NoteLayerBuilder,
   DefaultAnnotationLayerFactory,
   PDFHistory,
   PDFFindController,

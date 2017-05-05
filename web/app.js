@@ -56,6 +56,7 @@ import {
 import { CursorTool, PDFCursorTools } from "./pdf_cursor_tools.js";
 import { PDFRenderingQueue, RenderingStates } from "./pdf_rendering_queue.js";
 import { PDFSidebar, SidebarView } from "./pdf_sidebar.js";
+import { NoteStore } from "./note_store.js";
 import { OverlayManager } from "./overlay_manager.js";
 import { PasswordPrompt } from "./password_prompt.js";
 import { PDFAttachmentViewer } from "./pdf_attachment_viewer.js";
@@ -165,6 +166,8 @@ const PDFViewerApplication = {
   downloadManager: null,
   /** @type {OverlayManager} */
   overlayManager: null,
+  /** @type {NoteStore} */
+  noteStore: null,
   /** @type {Preferences} */
   preferences: null,
   /** @type {Toolbar} */
@@ -369,6 +372,9 @@ const PDFViewerApplication = {
     });
     this.findController = findController;
 
+    const noteStore = new NoteStore();
+    self.noteStore = noteStore;
+
     const container = appConfig.mainContainer;
     const viewer = appConfig.viewerContainer;
     this.pdfViewer = new PDFViewer({
@@ -378,6 +384,7 @@ const PDFViewerApplication = {
       renderingQueue: pdfRenderingQueue,
       linkService: pdfLinkService,
       downloadManager,
+      noteStore,
       findController,
       renderer: AppOptions.get("renderer"),
       enableWebGL: AppOptions.get("enableWebGL"),

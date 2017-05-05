@@ -213,10 +213,23 @@ class IL10n {
   async translate(element) {}
 }
 
+/**
+ * @interface
+ */
+class INoteLayerFactory {
+  /**
+   * @param {HTMLDivElement} pageDiv
+   * @param {PDFPage} pdfPage
+   * @returns {NoteLayerBuilder}
+   */
+  createNoteLayerBuilder(pageDiv, pdfPage) {}
+}
+
 export {
   IPDFLinkService,
   IPDFHistory,
   IRenderableView,
+  INoteLayerFactory,
   IPDFTextLayerFactory,
   IPDFAnnotationLayerFactory,
   IL10n,

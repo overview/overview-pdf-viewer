@@ -48,6 +48,7 @@ import { viewerCompatibilityParams } from "./viewer_compatibility.js";
  * @property {IPDFAnnotationLayerFactory} annotationLayerFactory
  * @property {string} [imageResourcesPath] - Path for image resources, mainly
  *   for annotation icons. Include trailing slash.
+ * @property {INoteLayerFactory} noteLayerFactory
  * @property {boolean} renderInteractiveForms - Turns on rendering of
  *   interactive form elements. The default is `false`.
  * @property {string} renderer - 'canvas' or 'svg'. The default is 'canvas'.
@@ -96,6 +97,7 @@ class PDFPageView {
     this.renderingQueue = options.renderingQueue;
     this.textLayerFactory = options.textLayerFactory;
     this.annotationLayerFactory = options.annotationLayerFactory;
+    this.noteLayerFactory = options.noteLayerFactory;
     this.renderer = options.renderer || RendererType.CANVAS;
     this.enableWebGL = options.enableWebGL || false;
     this.l10n = options.l10n || NullL10n;
@@ -109,6 +111,7 @@ class PDFPageView {
     this.annotationLayer = null;
     this.textLayer = null;
     this.zoomLayer = null;
+    this.noteLayer = null;
 
     const div = document.createElement("div");
     div.className = "page";
@@ -541,6 +544,17 @@ class PDFPageView {
       }
       this.annotationLayer.render(this.viewport, "display");
     }
+
+    if (this.noteLayerFactory) {
+      if (!this.noteLayer) {
+        this.noteLayer = this.noteLayerFactory.createNoteLayerBuilder(
+          div,
+          pdfPage
+        );
+      }
+      this.noteLayer.render(this.viewport, "display");
+    }
+
     div.setAttribute("data-loaded", true);
 
     this.eventBus.dispatch("pagerender", {
