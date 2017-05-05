@@ -1487,7 +1487,6 @@ function webViewerPageMode(e) {
     case 'thumbs':
       view = SidebarView.THUMBS;
       break;
-    case 'bookmarks':
     case 'outline':
       view = SidebarView.OUTLINE;
       break;
@@ -1552,11 +1551,6 @@ function webViewerUpdateViewarea(evt) {
       'scrollTop': location.top,
     }).catch(function() { /* unable to write to storage */ });
   }
-  var href =
-    PDFViewerApplication.pdfLinkService.getAnchorUrl(location.pdfOpenParams);
-  PDFViewerApplication.appConfig.toolbar.viewBookmark.href = href;
-  PDFViewerApplication.appConfig.secondaryToolbar.viewBookmarkButton.href =
-    href;
 
   // Update the current bookmark in the browsing history.
   PDFViewerApplication.pdfHistory.updateCurrentBookmark(location.pdfOpenParams,
@@ -1622,9 +1616,6 @@ if (typeof PDFJSDev === 'undefined' || PDFJSDev.test('GENERIC')) {
 
     // URL does not reflect proper document location - hiding some icons.
     var appConfig = PDFViewerApplication.appConfig;
-    appConfig.toolbar.viewBookmark.setAttribute('hidden', 'true');
-    appConfig.secondaryToolbar.viewBookmarkButton.setAttribute('hidden',
-                                                               'true');
     appConfig.toolbar.download.setAttribute('hidden', 'true');
     appConfig.secondaryToolbar.downloadButton.setAttribute('hidden', 'true');
   };

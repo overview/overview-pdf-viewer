@@ -41,8 +41,6 @@ var SCALE_SELECT_PADDING = 22;
  * @property {HTMLButtonElement} presentationModeButton - Button to switch to
  *   presentation mode.
  * @property {HTMLButtonElement} download - Button to download the document.
- * @property {HTMLAElement} viewBookmark - Element to link current url of
- *   the page view.
  */
 
 /**

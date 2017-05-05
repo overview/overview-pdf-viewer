@@ -66,7 +66,6 @@ function getViewerConfiguration() {
       viewFind: document.getElementById('viewFind'),
       presentationModeButton: document.getElementById('presentationMode'),
       download: document.getElementById('download'),
-      viewBookmark: document.getElementById('viewBookmark'),
     },
     secondaryToolbar: {
       toolbar: document.getElementById('secondaryToolbar'),
@@ -76,7 +75,6 @@ function getViewerConfiguration() {
       presentationModeButton:
         document.getElementById('secondaryPresentationMode'),
       downloadButton: document.getElementById('secondaryDownload'),
-      viewBookmarkButton: document.getElementById('secondaryViewBookmark'),
       firstPageButton: document.getElementById('firstPage'),
       lastPageButton: document.getElementById('lastPage'),
       pageRotateCwButton: document.getElementById('pageRotateCw'),

@@ -27,8 +27,6 @@ import { mozL10n, SCROLLBAR_PADDING } from './ui_utils';
  *   presentation mode.
  * @property {HTMLButtonElement} downloadButton - Button to download the
  *   document.
- * @property {HTMLLinkElement} viewBookmarkButton - Button to obtain a bookmark
- *   link to the current location in the document.
  * @property {HTMLButtonElement} firstPageButton - Button to go to the first
  *   page in the document.
  * @property {HTMLButtonElement} lastPageButton - Button to go to the last page
@@ -61,7 +59,6 @@ var SecondaryToolbar = (function SecondaryToolbarClosure() {
       { element: options.presentationModeButton, eventName: 'presentationmode',
         close: true },
       { element: options.downloadButton, eventName: 'download', close: true },
-      { element: options.viewBookmarkButton, eventName: null, close: true },
       { element: options.firstPageButton, eventName: 'firstpage', close: true },
       { element: options.lastPageButton, eventName: 'lastpage', close: true },
       { element: options.pageRotateCwButton, eventName: 'rotatecw',

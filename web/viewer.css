@@ -892,29 +892,6 @@ html[dir='rtl'] .toolbarButton.pageDown::before {
   content: url(images/toolbarButton-download.png);
 }
 
-.toolbarButton.bookmark,
-.secondaryToolbarButton.bookmark {
-  -webkit-box-sizing: border-box;
-  -moz-box-sizing: border-box;
-  box-sizing: border-box;
-  outline: none;
-  padding-top: 4px;
-  text-decoration: none;
-}
-.secondaryToolbarButton.bookmark {
-  padding-top: 5px;
-}
-
-.bookmark[href='#'] {
-  opacity: .5;
-  pointer-events: none;
-}
-
-.toolbarButton.bookmark::before,
-.secondaryToolbarButton.bookmark::before {
-  content: url(images/toolbarButton-bookmark.png);
-}
-
 #viewThumbnail.toolbarButton::before {
   content: url(images/toolbarButton-viewThumbnail.png);
 }
@@ -969,12 +946,6 @@ html[dir="ltr"] .secondaryToolbarButton {
 html[dir="rtl"] .secondaryToolbarButton {
   padding-right: 24px;
   text-align: right;
-}
-html[dir="ltr"] .secondaryToolbarButton.bookmark {
-  padding-left: 27px;
-}
-html[dir="rtl"] .secondaryToolbarButton.bookmark {
-  padding-right: 27px;
 }
 
 html[dir="ltr"] .secondaryToolbarButton > span {
@@ -1669,11 +1640,6 @@ html[dir='rtl'] #documentPropertiesOverlay .row > * {
   .toolbarButton.download::before,
   .secondaryToolbarButton.download::before {
     content: url(images/toolbarButton-download@2x.png);
-  }
-
-  .toolbarButton.bookmark::before,
-  .secondaryToolbarButton.bookmark::before {
-    content: url(images/toolbarButton-bookmark@2x.png);
   }
 
   #viewThumbnail.toolbarButton::before {
