@@ -41,18 +41,13 @@ var vinyl = require('vinyl-fs');
 var BUILD_DIR = 'build/';
 var L10N_DIR = 'l10n/';
 var TEST_DIR = 'test/';
-var EXTENSION_SRC_DIR = 'extensions/';
 
 var BASELINE_DIR = BUILD_DIR + 'baseline/';
-var MOZCENTRAL_BASELINE_DIR = BUILD_DIR + 'mozcentral.baseline/';
 var GENERIC_DIR = BUILD_DIR + 'generic/';
 var COMPONENTS_DIR = BUILD_DIR + 'components/';
 var SINGLE_FILE_DIR = BUILD_DIR + 'singlefile/';
 var MINIFIED_DIR = BUILD_DIR + 'minified/';
-var FIREFOX_BUILD_DIR = BUILD_DIR + 'firefox/';
-var CHROME_BUILD_DIR = BUILD_DIR + 'chromium/';
 var JSDOC_BUILD_DIR = BUILD_DIR + 'jsdoc/';
-var GH_PAGES_DIR = BUILD_DIR + 'gh-pages/';
 var SRC_DIR = 'src/';
 var LIB_DIR = BUILD_DIR + 'lib/';
 var DIST_DIR = BUILD_DIR + 'dist/';
@@ -60,10 +55,6 @@ var COMMON_WEB_FILES = [
   'web/images/*.{png,svg,gif,cur}',
   'web/debugger.js'
 ];
-var MOZCENTRAL_DIFF_FILE = 'mozcentral.diff';
-
-var REPO = 'git@github.com:mozilla/pdf.js.git';
-var DIST_REPO_URL = 'https://github.com/mozilla/pdfjs-dist';
 
 var builder = require('./external/builder/builder.js');
 
@@ -187,29 +178,6 @@ function getVersionJSON() {
   return JSON.parse(fs.readFileSync(BUILD_DIR + 'version.json').toString());
 }
 
-function checkChromePreferencesFile(chromePrefsPath, webPrefsPath) {
-  var chromePrefs = JSON.parse(fs.readFileSync(chromePrefsPath).toString());
-  var chromePrefsKeys = Object.keys(chromePrefs.properties);
-  chromePrefsKeys.sort();
-  var webPrefs = JSON.parse(fs.readFileSync(webPrefsPath).toString());
-  var webPrefsKeys = Object.keys(webPrefs);
-  webPrefsKeys.sort();
-  var telemetryIndex = chromePrefsKeys.indexOf('disableTelemetry');
-  if (telemetryIndex >= 0) {
-    chromePrefsKeys.splice(telemetryIndex, 1);
-  } else {
-    console.log('Warning: disableTelemetry key not found in chrome prefs!');
-    return false;
-  }
-  if (webPrefsKeys.length !== chromePrefsKeys.length) {
-    return false;
-  }
-  return webPrefsKeys.every(function (value, index) {
-    return chromePrefsKeys[index] === value &&
-           chromePrefs.properties[value].default === webPrefs[value];
-  });
-}
-
 function replaceWebpackRequire() {
   // Produced bundles can be rebundled again, avoid collisions (e.g. in api.js)
   // by renaming  __webpack_require__ to something else.
@@ -290,20 +258,6 @@ function createComponentsBundle(defines) {
     .pipe(webpack2Stream(componentsFileConfig))
     .pipe(replaceWebpackRequire())
     .pipe(replaceJSRootName(componentsAMDName));
-}
-
-function createCompatibilityBundle(defines) {
-  var compatibilityAMDName = 'pdfjs-dist/web/compatibility';
-  var compatibilityOutputName = 'compatibility.js';
-
-  var compatibilityFileConfig = createWebpackConfig(defines, {
-    filename: compatibilityOutputName,
-    library: compatibilityAMDName,
-    libraryTarget: 'umd',
-    umdNamedDefine: true
-  });
-  return gulp.src('./web/compatibility.js')
-    .pipe(webpack2Stream(compatibilityFileConfig));
 }
 
 function checkFile(path) {
@@ -421,8 +375,6 @@ gulp.task('default', function() {
   });
 });
 
-gulp.task('extension', ['firefox', 'chromium']);
-
 gulp.task('buildnumber', function (done) {
   console.log();
   console.log('### Getting extension build number');
@@ -458,14 +410,10 @@ gulp.task('buildnumber', function (done) {
 
 gulp.task('locale', function () {
   var VIEWER_LOCALE_OUTPUT = 'web/locale/';
-  var METADATA_OUTPUT = 'extensions/firefox/';
-  var EXTENSION_LOCALE_OUTPUT = 'extensions/firefox/locale/';
 
   console.log();
   console.log('### Building localization files');
 
-  rimraf.sync(EXTENSION_LOCALE_OUTPUT);
-  mkdirp.sync(EXTENSION_LOCALE_OUTPUT);
   rimraf.sync(VIEWER_LOCALE_OUTPUT);
   mkdirp.sync(VIEWER_LOCALE_OUTPUT);
 
@@ -486,7 +434,6 @@ gulp.task('locale', function () {
       continue;
     }
 
-    mkdirp.sync(EXTENSION_LOCALE_OUTPUT + '/' + locale);
     mkdirp.sync(VIEWER_LOCALE_OUTPUT + '/' + locale);
 
     locales.push(locale);
@@ -506,14 +453,6 @@ gulp.task('locale', function () {
   }
 
   return merge([
-    createStringSource('metadata.inc', metadataContent)
-      .pipe(gulp.dest(METADATA_OUTPUT)),
-    createStringSource('chrome.manifest.inc', chromeManifestContent)
-      .pipe(gulp.dest(METADATA_OUTPUT)),
-    gulp.src(L10N_DIR + '/{' + locales.join(',') + '}' +
-             '/{viewer,chrome}.properties', {base: L10N_DIR})
-      .pipe(gulp.dest(EXTENSION_LOCALE_OUTPUT)),
-
     createStringSource('locale.properties', viewerOutput)
       .pipe(gulp.dest(VIEWER_LOCALE_OUTPUT)),
     gulp.src(L10N_DIR + '/{' + locales.join(',') + '}' +
@@ -641,7 +580,6 @@ gulp.task('components', ['buildnumber'], function () {
 
   return merge([
     createComponentsBundle(defines).pipe(gulp.dest(COMPONENTS_DIR)),
-    createCompatibilityBundle(defines).pipe(gulp.dest(COMPONENTS_DIR)),
     gulp.src(COMPONENTS_IMAGES).pipe(gulp.dest(COMPONENTS_DIR + 'images')),
     preprocessCSS('web/pdf_viewer.css', 'components', defines, true)
         .pipe(gulp.dest(COMPONENTS_DIR)),
@@ -727,240 +665,6 @@ gulp.task('minified-post', ['minified-pre'], function () {
 
 gulp.task('minified', ['minified-post']);
 
-gulp.task('firefox-pre', ['buildnumber', 'locale'], function () {
-  console.log();
-  console.log('### Building Firefox extension');
-  var defines = builder.merge(DEFINES, { FIREFOX: true, PDFJS_NEXT: true, });
-
-  var FIREFOX_BUILD_CONTENT_DIR = FIREFOX_BUILD_DIR + '/content/',
-      FIREFOX_EXTENSION_DIR = 'extensions/firefox/',
-      FIREFOX_CONTENT_DIR = EXTENSION_SRC_DIR + '/firefox/content/',
-      FIREFOX_PREF_PREFIX = 'extensions.uriloader@pdf.js',
-      FIREFOX_STREAM_CONVERTER_ID = '6457a96b-2d68-439a-bcfa-44465fbcdbb1',
-      FIREFOX_STREAM_CONVERTER2_ID = '6457a96b-2d68-439a-bcfa-44465fbcdbb2';
-
-  // Clear out everything in the firefox extension build directory
-  rimraf.sync(FIREFOX_BUILD_DIR);
-
-  var localizedMetadata =
-    fs.readFileSync(FIREFOX_EXTENSION_DIR + 'metadata.inc').toString();
-  var chromeManifestLocales =
-    fs.readFileSync(FIREFOX_EXTENSION_DIR + 'chrome.manifest.inc').toString();
-  var version = getVersionJSON().version;
-
-  return merge([
-    createBundle(defines).pipe(gulp.dest(FIREFOX_BUILD_CONTENT_DIR + 'build')),
-    createWebBundle(defines).pipe(gulp.dest(FIREFOX_BUILD_CONTENT_DIR + 'web')),
-    gulp.src(COMMON_WEB_FILES, {base: 'web/'})
-        .pipe(gulp.dest(FIREFOX_BUILD_CONTENT_DIR + 'web')),
-    gulp.src(FIREFOX_EXTENSION_DIR + 'locale/**/*.properties',
-             {base: FIREFOX_EXTENSION_DIR})
-        .pipe(gulp.dest(FIREFOX_BUILD_DIR)),
-    gulp.src(['external/bcmaps/*.bcmap', 'external/bcmaps/LICENSE'],
-             {base: 'external/bcmaps'})
-        .pipe(gulp.dest(FIREFOX_BUILD_CONTENT_DIR + 'web/cmaps')),
-
-    preprocessHTML('web/viewer.html', defines)
-        .pipe(gulp.dest(FIREFOX_BUILD_CONTENT_DIR + 'web')),
-    preprocessCSS('web/viewer.css', 'firefox', defines, true)
-        .pipe(gulp.dest(FIREFOX_BUILD_CONTENT_DIR + 'web')),
-
-    gulp.src(FIREFOX_CONTENT_DIR + 'PdfJs-stub.jsm')
-        .pipe(rename('PdfJs.jsm'))
-        .pipe(gulp.dest(FIREFOX_BUILD_CONTENT_DIR)),
-    gulp.src(FIREFOX_CONTENT_DIR + 'PdfJsTelemetry-stub.jsm')
-        .pipe(rename('PdfJsTelemetry.jsm'))
-        .pipe(gulp.dest(FIREFOX_BUILD_CONTENT_DIR)),
-    gulp.src(FIREFOX_EXTENSION_DIR + '*.png')
-        .pipe(gulp.dest(FIREFOX_BUILD_DIR)),
-    gulp.src(FIREFOX_EXTENSION_DIR + 'chrome.manifest')
-        .pipe(replace(/#.*PDFJS_SUPPORTED_LOCALES.*\n/, chromeManifestLocales))
-        .pipe(gulp.dest(FIREFOX_BUILD_DIR)),
-    gulp.src(FIREFOX_EXTENSION_DIR + '*.rdf')
-        .pipe(replace(/\bPDFJSSCRIPT_VERSION\b/g, version))
-        .pipe(replace(/.*<!--\s*PDFJS_LOCALIZED_METADATA\s*-->.*\n/,
-                      localizedMetadata))
-        .pipe(gulp.dest(FIREFOX_BUILD_DIR)),
-    gulp.src(FIREFOX_EXTENSION_DIR + 'chrome/content.js',
-             {base: FIREFOX_EXTENSION_DIR})
-        .pipe(gulp.dest(FIREFOX_BUILD_DIR)),
-    gulp.src('LICENSE').pipe(gulp.dest(FIREFOX_BUILD_DIR)),
-
-    gulp.src(FIREFOX_EXTENSION_DIR + 'tools/l10n.js')
-        .pipe(gulp.dest(FIREFOX_BUILD_CONTENT_DIR + '/web')),
-
-    preprocessJS(FIREFOX_CONTENT_DIR + 'PdfStreamConverter.jsm', defines, true)
-        .pipe(replace(/\bPDFJSSCRIPT_STREAM_CONVERTER_ID\b/g,
-                      FIREFOX_STREAM_CONVERTER_ID))
-        .pipe(replace(/\bPDFJSSCRIPT_STREAM_CONVERTER2_ID\b/g,
-                      FIREFOX_STREAM_CONVERTER2_ID))
-        .pipe(replace(/\bPDFJSSCRIPT_PREF_PREFIX\b/g, FIREFOX_PREF_PREFIX))
-        .pipe(gulp.dest(FIREFOX_BUILD_CONTENT_DIR)),
-    preprocessJS(FIREFOX_CONTENT_DIR + 'PdfJsNetwork.jsm', defines, true)
-        .pipe(gulp.dest(FIREFOX_BUILD_CONTENT_DIR)),
-    preprocessJS(FIREFOX_CONTENT_DIR + 'PdfjsContentUtils.jsm', defines, true)
-        .pipe(gulp.dest(FIREFOX_BUILD_CONTENT_DIR)),
-    preprocessJS(FIREFOX_CONTENT_DIR + 'PdfjsChromeUtils.jsm', defines, true)
-        .pipe(replace(/\bPDFJSSCRIPT_PREF_PREFIX\b/g, FIREFOX_PREF_PREFIX))
-        .pipe(gulp.dest(FIREFOX_BUILD_CONTENT_DIR)),
-    preprocessJS(FIREFOX_EXTENSION_DIR + 'bootstrap.js', defines, true)
-        .pipe(gulp.dest(FIREFOX_BUILD_DIR)),
-  ]);
-});
-
-gulp.task('firefox', ['firefox-pre'], function (done) {
-  var FIREFOX_EXTENSION_FILES =
-        ['bootstrap.js',
-         'install.rdf',
-         'chrome.manifest',
-         'icon.png',
-         'icon64.png',
-         'content',
-         'chrome',
-         'locale',
-         'LICENSE'],
-      FIREFOX_EXTENSION_NAME = 'pdf.js.xpi';
-
-  var zipExecOptions = {
-    cwd: FIREFOX_BUILD_DIR,
-    // Set timezone to UTC before calling zip to get reproducible results.
-    env: {'TZ': 'UTC'},
-  };
-
-  exec('zip -r ' + FIREFOX_EXTENSION_NAME + ' ' +
-       FIREFOX_EXTENSION_FILES.join(' '), zipExecOptions, function (err) {
-    if (err) {
-      done(new Error('Cannot exec zip: ' + err));
-      return;
-    }
-    console.log('extension created: ' + FIREFOX_EXTENSION_NAME);
-    done();
-  });
-});
-
-gulp.task('mozcentral-pre', ['buildnumber', 'locale'], function () {
-  console.log();
-  console.log('### Building mozilla-central extension');
-  var defines = builder.merge(DEFINES, { MOZCENTRAL: true, PDFJS_NEXT: true, });
-
-  var MOZCENTRAL_DIR = BUILD_DIR + 'mozcentral/',
-      MOZCENTRAL_EXTENSION_DIR = MOZCENTRAL_DIR + 'browser/extensions/pdfjs/',
-      MOZCENTRAL_CONTENT_DIR = MOZCENTRAL_EXTENSION_DIR + 'content/',
-      FIREFOX_EXTENSION_DIR = 'extensions/firefox/',
-      MOZCENTRAL_L10N_DIR = MOZCENTRAL_DIR + 'browser/locales/en-US/pdfviewer/',
-      FIREFOX_CONTENT_DIR = EXTENSION_SRC_DIR + '/firefox/content/',
-      MOZCENTRAL_PREF_PREFIX = 'pdfjs',
-      MOZCENTRAL_STREAM_CONVERTER_ID = 'd0c5195d-e798-49d4-b1d3-9324328b2291',
-      MOZCENTRAL_STREAM_CONVERTER2_ID = 'd0c5195d-e798-49d4-b1d3-9324328b2292';
-
-  // Clear out everything in the firefox extension build directory
-  rimraf.sync(MOZCENTRAL_DIR);
-
-  var versionJSON = getVersionJSON();
-  var version = versionJSON.version, commit = versionJSON.commit;
-
-  return merge([
-    createBundle(defines).pipe(gulp.dest(MOZCENTRAL_CONTENT_DIR + 'build')),
-    createWebBundle(defines).pipe(gulp.dest(MOZCENTRAL_CONTENT_DIR + 'web')),
-    gulp.src(COMMON_WEB_FILES, {base: 'web/'})
-        .pipe(gulp.dest(MOZCENTRAL_CONTENT_DIR + 'web')),
-    gulp.src(['external/bcmaps/*.bcmap', 'external/bcmaps/LICENSE'],
-             {base: 'external/bcmaps'})
-        .pipe(gulp.dest(MOZCENTRAL_CONTENT_DIR + 'web/cmaps')),
-
-    preprocessHTML('web/viewer.html', defines)
-        .pipe(gulp.dest(MOZCENTRAL_CONTENT_DIR + 'web')),
-    preprocessCSS('web/viewer.css', 'mozcentral', defines, true)
-        .pipe(gulp.dest(MOZCENTRAL_CONTENT_DIR + 'web')),
-
-    gulp.src(FIREFOX_CONTENT_DIR + 'PdfJsTelemetry.jsm')
-        .pipe(gulp.dest(MOZCENTRAL_CONTENT_DIR)),
-    gulp.src(FIREFOX_CONTENT_DIR + 'pdfjschildbootstrap.js')
-        .pipe(gulp.dest(MOZCENTRAL_CONTENT_DIR)),
-    gulp.src(FIREFOX_CONTENT_DIR + 'pdfjschildbootstrap-enabled.js')
-        .pipe(gulp.dest(MOZCENTRAL_CONTENT_DIR)),
-    gulp.src(FIREFOX_EXTENSION_DIR + 'chrome-mozcentral.manifest')
-        .pipe(rename('chrome.manifest'))
-        .pipe(gulp.dest(MOZCENTRAL_EXTENSION_DIR)),
-    gulp.src(FIREFOX_EXTENSION_DIR + 'locale/en-US/*.properties')
-        .pipe(gulp.dest(MOZCENTRAL_L10N_DIR)),
-    gulp.src(FIREFOX_EXTENSION_DIR + 'README.mozilla')
-        .pipe(replace(/\bPDFJSSCRIPT_VERSION\b/g, version))
-        .pipe(replace(/\bPDFJSSCRIPT_COMMIT\b/g, commit))
-        .pipe(gulp.dest(MOZCENTRAL_EXTENSION_DIR)),
-    gulp.src('LICENSE').pipe(gulp.dest(MOZCENTRAL_EXTENSION_DIR)),
-    gulp.src(FIREFOX_EXTENSION_DIR + 'tools/l10n.js')
-        .pipe(gulp.dest(MOZCENTRAL_CONTENT_DIR + '/web')),
-
-    preprocessJS(FIREFOX_CONTENT_DIR + 'PdfJs.jsm', defines, true)
-        .pipe(gulp.dest(MOZCENTRAL_CONTENT_DIR)),
-    preprocessJS(FIREFOX_CONTENT_DIR + 'PdfStreamConverter.jsm', defines, true)
-        .pipe(replace(/\bPDFJSSCRIPT_STREAM_CONVERTER_ID\b/g,
-                      MOZCENTRAL_STREAM_CONVERTER_ID))
-        .pipe(replace(/\bPDFJSSCRIPT_STREAM_CONVERTER2_ID\b/g,
-                      MOZCENTRAL_STREAM_CONVERTER2_ID))
-        .pipe(replace(/\bPDFJSSCRIPT_PREF_PREFIX\b/g, MOZCENTRAL_PREF_PREFIX))
-        .pipe(gulp.dest(MOZCENTRAL_CONTENT_DIR)),
-    preprocessJS(FIREFOX_CONTENT_DIR + 'PdfJsNetwork.jsm', defines, true)
-        .pipe(gulp.dest(MOZCENTRAL_CONTENT_DIR)),
-    preprocessJS(FIREFOX_CONTENT_DIR + 'PdfjsContentUtils.jsm', defines, true)
-        .pipe(gulp.dest(MOZCENTRAL_CONTENT_DIR)),
-    preprocessJS(FIREFOX_CONTENT_DIR + 'PdfjsChromeUtils.jsm', defines, true)
-        .pipe(replace(/\bPDFJSSCRIPT_PREF_PREFIX\b/g, MOZCENTRAL_PREF_PREFIX))
-        .pipe(gulp.dest(MOZCENTRAL_CONTENT_DIR)),
-  ]);
-});
-
-gulp.task('mozcentral', ['mozcentral-pre']);
-
-gulp.task('chromium-pre', ['buildnumber', 'locale'], function () {
-  console.log();
-  console.log('### Building Chromium extension');
-  var defines = builder.merge(DEFINES, { CHROME: true, PDFJS_NEXT: true, });
-
-  var CHROME_BUILD_DIR = BUILD_DIR + '/chromium/',
-      CHROME_BUILD_CONTENT_DIR = CHROME_BUILD_DIR + '/content/';
-
-  // Clear out everything in the chrome extension build directory
-  rimraf.sync(CHROME_BUILD_DIR);
-
-  var version = getVersionJSON().version;
-
-  return merge([
-    createBundle(defines).pipe(gulp.dest(CHROME_BUILD_CONTENT_DIR + 'build')),
-    createWebBundle(defines).pipe(gulp.dest(CHROME_BUILD_CONTENT_DIR + 'web')),
-    gulp.src(COMMON_WEB_FILES, {base: 'web/'})
-        .pipe(gulp.dest(CHROME_BUILD_CONTENT_DIR + 'web')),
-
-    gulp.src('external/webL10n/l10n.js')
-        .pipe(gulp.dest(CHROME_BUILD_CONTENT_DIR + 'web')),
-    gulp.src([
-      'web/locale/*/viewer.properties',
-      'web/locale/locale.properties'
-    ], {base: 'web/'}).pipe(gulp.dest(CHROME_BUILD_CONTENT_DIR + 'web')),
-    gulp.src(['external/bcmaps/*.bcmap', 'external/bcmaps/LICENSE'],
-             {base: 'external/bcmaps'})
-        .pipe(gulp.dest(CHROME_BUILD_CONTENT_DIR + 'web/cmaps')),
-
-    preprocessHTML('web/viewer.html', defines)
-        .pipe(gulp.dest(CHROME_BUILD_CONTENT_DIR + 'web')),
-    preprocessCSS('web/viewer.css', 'chrome', defines, true)
-        .pipe(gulp.dest(CHROME_BUILD_CONTENT_DIR + 'web')),
-
-    gulp.src('LICENSE').pipe(gulp.dest(CHROME_BUILD_DIR)),
-    gulp.src('extensions/chromium/manifest.json')
-        .pipe(replace(/\bPDFJSSCRIPT_VERSION\b/g, version))
-        .pipe(gulp.dest(CHROME_BUILD_DIR)),
-    gulp.src([
-      'extensions/chromium/**/*.{html,js,css,png}',
-      'extensions/chromium/preferences_schema.json'
-    ], {base: 'extensions/chromium/'})
-        .pipe(gulp.dest(CHROME_BUILD_DIR)),
-  ]);
-});
-
-gulp.task('chromium', ['chromium-pre']);
-
 gulp.task('jsdoc', function (done) {
   console.log();
   console.log('### Generating documentation (JSDoc)');
@@ -1028,8 +732,6 @@ gulp.task('lib', ['buildnumber'], function () {
   ]).pipe(transform(preprocess))
     .pipe(gulp.dest('build/lib/'));
 });
-
-gulp.task('web-pre', ['generic', 'extension', 'jsdoc']);
 
 gulp.task('dist-pre',
   ['generic', 'singlefile', 'components', 'lib', 'minified']);
@@ -1151,13 +853,6 @@ gulp.task('lint', function (done) {
     console.log();
     console.log('### Checking supplemental files');
 
-    if (!checkChromePreferencesFile(
-          'extensions/chromium/preferences_schema.json',
-          'web/default_preferences.json')) {
-      done(new Error('chromium/preferences_schema is not in sync.'));
-      return;
-    }
-
     console.log('files checked, no errors found');
     done();
   });
@@ -1180,18 +875,6 @@ gulp.task('clean', function(callback) {
   rimraf(BUILD_DIR, callback);
 });
 
-gulp.task('makefile', function () {
-  var makefileContent = 'help:\n\tgulp\n\n';
-  var targetsNames = [];
-  for (var i in target) {
-    makefileContent += i + ':\n\tgulp ' + i + '\n\n';
-    targetsNames.push(i);
-  }
-  makefileContent += '.PHONY: ' + targetsNames.join(' ') + '\n';
-  return createStringSource('Makefile', makefileContent)
-    .pipe(gulp.dest('.'));
-});
-
 gulp.task('importl10n', function(done) {
   var locales = require('./external/importL10n/locales.js');
 
@@ -1202,233 +885,6 @@ gulp.task('importl10n', function(done) {
     fs.mkdirSync(L10N_DIR);
   }
   locales.downloadL10n(L10N_DIR, done);
-});
-
-gulp.task('gh-pages-prepare', ['web-pre'], function () {
-  console.log();
-  console.log('### Creating web site');
-
-  rimraf.sync(GH_PAGES_DIR);
-
-  // 'vinyl' because web/viewer.html needs its BOM.
-  return merge([
-    vinyl.src(GENERIC_DIR + '**/*', {base: GENERIC_DIR, stripBOM: false})
-         .pipe(gulp.dest(GH_PAGES_DIR)),
-    gulp.src([FIREFOX_BUILD_DIR + '*.xpi',
-              FIREFOX_BUILD_DIR + '*.rdf'])
-        .pipe(gulp.dest(GH_PAGES_DIR + EXTENSION_SRC_DIR + 'firefox/')),
-    gulp.src(CHROME_BUILD_DIR + '*.crx')
-        .pipe(gulp.dest(GH_PAGES_DIR + EXTENSION_SRC_DIR + 'chromium/')),
-    gulp.src('test/features/**/*', {base: 'test/'})
-        .pipe(gulp.dest(GH_PAGES_DIR)),
-    gulp.src(JSDOC_BUILD_DIR + '**/*', {base: JSDOC_BUILD_DIR})
-        .pipe(gulp.dest(GH_PAGES_DIR + 'api/draft/')),
-  ]);
-});
-
-gulp.task('wintersmith', ['gh-pages-prepare'], function (done) {
-  var wintersmith = require('wintersmith');
-  var env = wintersmith('docs/config.json');
-  env.build(GH_PAGES_DIR, function (error) {
-    if (error) {
-      return done(error);
-    }
-    replaceInFile(GH_PAGES_DIR + '/getting_started/index.html',
-                  /STABLE_VERSION/g, config.stableVersion);
-    replaceInFile(GH_PAGES_DIR + '/getting_started/index.html',
-                  /BETA_VERSION/g, config.betaVersion);
-    console.log('Done building with wintersmith.');
-    done();
-  });
-});
-
-gulp.task('gh-pages-git', ['gh-pages-prepare', 'wintersmith'], function () {
-  var VERSION = getVersionJSON().version;
-  var reason = process.env['PDFJS_UPDATE_REASON'];
-
-  safeSpawnSync('git', ['init'], {cwd: GH_PAGES_DIR});
-  safeSpawnSync('git', ['remote', 'add', 'origin', REPO], {cwd: GH_PAGES_DIR});
-  safeSpawnSync('git', ['add', '-A'], {cwd: GH_PAGES_DIR});
-  safeSpawnSync('git', [
-    'commit', '-am', 'gh-pages site created via gulpfile.js script',
-    '-m', 'PDF.js version ' + VERSION + (reason ? ' - ' + reason : '')
-  ], {cwd: GH_PAGES_DIR});
-  safeSpawnSync('git', ['branch', '-m', 'gh-pages'], {cwd: GH_PAGES_DIR});
-
-  console.log();
-  console.log('Website built in ' + GH_PAGES_DIR);
-});
-
-gulp.task('web', ['gh-pages-prepare', 'wintersmith', 'gh-pages-git']);
-
-gulp.task('dist-repo-prepare', ['dist-pre'], function () {
-  var VERSION = getVersionJSON().version;
-
-  console.log();
-  console.log('### Cloning baseline distribution');
-
-  rimraf.sync(DIST_DIR);
-  mkdirp.sync(DIST_DIR);
-  safeSpawnSync('git', ['clone', '--depth', '1', DIST_REPO_URL, DIST_DIR]);
-
-  console.log();
-  console.log('### Overwriting all files');
-  rimraf.sync(path.join(DIST_DIR, '*'));
-
-  // Rebuilding manifests
-  var DIST_NAME = 'pdfjs-dist';
-  var DIST_DESCRIPTION = 'Generic build of Mozilla\'s PDF.js library.';
-  var DIST_KEYWORDS = ['Mozilla', 'pdf', 'pdf.js'];
-  var DIST_HOMEPAGE = 'http://mozilla.github.io/pdf.js/';
-  var DIST_BUGS_URL = 'https://github.com/mozilla/pdf.js/issues';
-  var DIST_LICENSE = 'Apache-2.0';
-  var npmManifest = {
-    name: DIST_NAME,
-    version: VERSION,
-    main: 'build/pdf.js',
-    description: DIST_DESCRIPTION,
-    keywords: DIST_KEYWORDS,
-    homepage: DIST_HOMEPAGE,
-    bugs: DIST_BUGS_URL,
-    license: DIST_LICENSE,
-    dependencies: {
-      'node-ensure': '^0.0.0', // shim for node for require.ensure
-      'worker-loader': '^0.8.0', // used in external/dist/webpack.json
-    },
-    browser: {
-      'node-ensure': false
-    },
-    format: 'amd', // to not allow system.js to choose 'cjs'
-    repository: {
-      type: 'git',
-      url: DIST_REPO_URL
-    },
-  };
-  var packageJsonSrc =
-    createStringSource('package.json', JSON.stringify(npmManifest, null, 2));
-  var bowerManifest = {
-    name: DIST_NAME,
-    version: VERSION,
-    main: [
-      'build/pdf.js',
-      'build/pdf.worker.js',
-    ],
-    ignore: [],
-    keywords: DIST_KEYWORDS,
-  };
-  var bowerJsonSrc =
-    createStringSource('bower.json', JSON.stringify(bowerManifest, null, 2));
-
-  return merge([
-    packageJsonSrc.pipe(gulp.dest(DIST_DIR)),
-    bowerJsonSrc.pipe(gulp.dest(DIST_DIR)),
-    vinyl.src('external/dist/**/*',
-              {base: 'external/dist', stripBOM: false})
-         .pipe(gulp.dest(DIST_DIR)),
-    gulp.src(GENERIC_DIR + 'LICENSE')
-        .pipe(gulp.dest(DIST_DIR)),
-    gulp.src(GENERIC_DIR + 'web/cmaps/**/*',
-             {base: GENERIC_DIR + 'web'})
-        .pipe(gulp.dest(DIST_DIR)),
-    gulp.src([
-      GENERIC_DIR + 'build/pdf.js',
-      GENERIC_DIR + 'build/pdf.js.map',
-      GENERIC_DIR + 'build/pdf.worker.js',
-      GENERIC_DIR + 'build/pdf.worker.js.map',
-      SINGLE_FILE_DIR + 'build/pdf.combined.js',
-      SINGLE_FILE_DIR + 'build/pdf.combined.js.map',
-      SRC_DIR + 'pdf.worker.entry.js',
-    ]).pipe(gulp.dest(DIST_DIR + 'build/')),
-    gulp.src(MINIFIED_DIR + 'build/pdf.js')
-        .pipe(rename('pdf.min.js'))
-        .pipe(gulp.dest(DIST_DIR + 'build/')),
-    gulp.src(MINIFIED_DIR + 'build/pdf.worker.js')
-        .pipe(rename('pdf.worker.min.js'))
-        .pipe(gulp.dest(DIST_DIR + 'build/')),
-    gulp.src(COMPONENTS_DIR + '**/*', {base: COMPONENTS_DIR})
-        .pipe(gulp.dest(DIST_DIR + 'web/')),
-    gulp.src(LIB_DIR + '**/*', {base: LIB_DIR})
-        .pipe(gulp.dest(DIST_DIR + 'lib/')),
-  ]);
-});
-
-gulp.task('dist-repo-git', ['dist-repo-prepare'], function () {
-  var VERSION = getVersionJSON().version;
-
-  console.log();
-  console.log('### Committing changes');
-
-  var reason = process.env['PDFJS_UPDATE_REASON'];
-  var message = 'PDF.js version ' + VERSION + (reason ? ' - ' + reason : '');
-  safeSpawnSync('git', ['add', '*'], {cwd: DIST_DIR});
-  safeSpawnSync('git', ['commit', '-am', message], {cwd: DIST_DIR});
-  safeSpawnSync('git', ['tag', '-a', 'v' + VERSION, '-m', message],
-                {cwd: DIST_DIR});
-
-  console.log();
-  console.log('Done. Push with');
-  console.log('  cd ' + DIST_DIR + '; ' +
-              'git push --tags ' + DIST_REPO_URL + ' master');
-  console.log();
-});
-
-gulp.task('dist', ['dist-repo-git']);
-
-gulp.task('mozcentralbaseline', ['baseline'], function (done) {
-  console.log();
-  console.log('### Creating mozcentral baseline environment');
-
-  // Create a mozcentral build.
-  rimraf.sync(BASELINE_DIR + BUILD_DIR);
-
-  var workingDirectory = path.resolve(process.cwd(), BASELINE_DIR);
-  safeSpawnSync('gulp', ['mozcentral'],
-                {env: process.env, cwd: workingDirectory, stdio: 'inherit'});
-
-  // Copy the mozcentral build to the mozcentral baseline directory.
-  rimraf.sync(MOZCENTRAL_BASELINE_DIR);
-  mkdirp.sync(MOZCENTRAL_BASELINE_DIR);
-
-  gulp.src([BASELINE_DIR + BUILD_DIR + 'mozcentral/**/*'])
-      .pipe(gulp.dest(MOZCENTRAL_BASELINE_DIR))
-      .on('end', function () {
-        // Commit the mozcentral baseline.
-        safeSpawnSync('git', ['init'], {cwd: MOZCENTRAL_BASELINE_DIR});
-        safeSpawnSync('git', ['add', '.'], {cwd: MOZCENTRAL_BASELINE_DIR});
-        safeSpawnSync('git', ['commit', '-m', '"mozcentral baseline"'],
-                      {cwd: MOZCENTRAL_BASELINE_DIR});
-        done();
-      });
-});
-
-gulp.task('mozcentraldiff', ['mozcentral', 'mozcentralbaseline'],
-    function (done) {
-  console.log();
-  console.log('### Creating mozcentral diff');
-
-  // Create the diff between the current mozcentral build and the
-  // baseline mozcentral build, which both exist at this point.
-  // The mozcentral baseline directory is a Git repository, so we
-  // remove all files and copy the current mozcentral build files
-  // into it to create the diff.
-  rimraf.sync(MOZCENTRAL_BASELINE_DIR + '*');
-
-  gulp.src([BUILD_DIR + 'mozcentral/**/*'])
-      .pipe(gulp.dest(MOZCENTRAL_BASELINE_DIR))
-      .on('end', function () {
-        safeSpawnSync('git', ['add', '-A'], {cwd: MOZCENTRAL_BASELINE_DIR});
-        var diff = safeSpawnSync('git',
-          ['diff', '--binary', '--cached', '--unified=8'],
-          {cwd: MOZCENTRAL_BASELINE_DIR}).stdout;
-
-        createStringSource(MOZCENTRAL_DIFF_FILE, diff)
-          .pipe(gulp.dest(BUILD_DIR))
-          .on('end', function () {
-            console.log('Result diff can be found at ' + BUILD_DIR +
-                        MOZCENTRAL_DIFF_FILE);
-            done();
-          });
-      });
 });
 
 gulp.task('externaltest', function () {
