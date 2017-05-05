@@ -37,6 +37,7 @@ var mozL10n = {
   get: function(key, args, fallbackString) {
     return fallbackString.replace(/{{([^}]+)}}/g, function(_, k) { return args[k] });
   },
+  translate: function() {}
 };
 
 /**
