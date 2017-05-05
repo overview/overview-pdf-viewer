@@ -48,10 +48,7 @@ var PDFThumbnailView = (function PDFThumbnailViewClosure() {
 
     // Since this is a temporary canvas, we need to fill the canvas with a white
     // background ourselves. `_getPageDrawContext` uses CSS rules for this.
-    if (typeof PDFJSDev === 'undefined' ||
-        PDFJSDev.test('MOZCENTRAL || FIREFOX || GENERIC')) {
-      tempCanvas.mozOpaque = true;
-    }
+    tempCanvas.mozOpaque = true;
 
     var ctx = tempCanvas.getContext('2d', {alpha: false});
     ctx.save();
@@ -204,10 +201,7 @@ var PDFThumbnailView = (function PDFThumbnailViewClosure() {
       // until rendering/image conversion is complete, to avoid display issues.
       this.canvas = canvas;
 
-      if (typeof PDFJSDev === 'undefined' ||
-          PDFJSDev.test('MOZCENTRAL || FIREFOX || GENERIC')) {
-        canvas.mozOpaque = true;
-      }
+      canvas.mozOpaque = true;
       var ctx = canvas.getContext('2d', {alpha: false});
       var outputScale = getOutputScale(ctx);
 

@@ -457,13 +457,10 @@ class PDFPresentationMode {
 
     window.addEventListener('fullscreenchange', this.fullscreenChangeBind);
     window.addEventListener('mozfullscreenchange', this.fullscreenChangeBind);
-    if (typeof PDFJSDev === 'undefined' ||
-        !PDFJSDev.test('FIREFOX || MOZCENTRAL')) {
-      window.addEventListener('webkitfullscreenchange',
-                              this.fullscreenChangeBind);
-      window.addEventListener('MSFullscreenChange',
-                              this.fullscreenChangeBind);
-    }
+    window.addEventListener('webkitfullscreenchange',
+                            this.fullscreenChangeBind);
+    window.addEventListener('MSFullscreenChange',
+                            this.fullscreenChangeBind);
   }
 
   /**
@@ -473,13 +470,10 @@ class PDFPresentationMode {
     window.removeEventListener('fullscreenchange', this.fullscreenChangeBind);
     window.removeEventListener('mozfullscreenchange',
                                this.fullscreenChangeBind);
-    if (typeof PDFJSDev === 'undefined' ||
-        !PDFJSDev.test('FIREFOX || MOZCENTRAL')) {
-      window.removeEventListener('webkitfullscreenchange',
-                                 this.fullscreenChangeBind);
-      window.removeEventListener('MSFullscreenChange',
-                                 this.fullscreenChangeBind);
-    }
+    window.removeEventListener('webkitfullscreenchange',
+                               this.fullscreenChangeBind);
+    window.removeEventListener('MSFullscreenChange',
+                               this.fullscreenChangeBind);
 
     delete this.fullscreenChangeBind;
   }

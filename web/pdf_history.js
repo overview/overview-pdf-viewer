@@ -180,30 +180,10 @@ PDFHistory.prototype = {
 
   _pushOrReplaceState: function pdfHistory_pushOrReplaceState(stateObj,
                                                               replace) {
-    // history.state.chromecomState is managed by chromecom.js.
-    if (typeof PDFJSDev !== 'undefined' && PDFJSDev.test('CHROME') &&
-        window.history.state && 'chromecomState' in window.history.state) {
-      stateObj = stateObj || {};
-      stateObj.chromecomState = window.history.state.chromecomState;
-    }
     if (replace) {
-      if (typeof PDFJSDev === 'undefined' ||
-          PDFJSDev.test('GENERIC || CHROME')) {
-        window.history.replaceState(stateObj, '', document.URL);
-      } else {
-        window.history.replaceState(stateObj, '');
-      }
+      window.history.replaceState(stateObj, '', document.URL);
     } else {
-      if (typeof PDFJSDev === 'undefined' ||
-          PDFJSDev.test('GENERIC || CHROME')) {
-        window.history.pushState(stateObj, '', document.URL);
-      } else {
-        window.history.pushState(stateObj, '');
-      }
-      if (typeof PDFJSDev !== 'undefined' && PDFJSDev.test('CHROME') &&
-          top === window) {
-        chrome.runtime.sendMessage('showPageAction');
-      }
+      window.history.pushState(stateObj, '', document.URL);
     }
   },
 

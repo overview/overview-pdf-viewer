@@ -523,10 +523,7 @@ var PDFPageView = (function PDFPageViewClosure() {
       canvasWrapper.appendChild(canvas);
       this.canvas = canvas;
 
-      if (typeof PDFJSDev === 'undefined' ||
-          PDFJSDev.test('MOZCENTRAL || FIREFOX || GENERIC')) {
-        canvas.mozOpaque = true;
-      }
+      canvas.mozOpaque = true;
 
       var ctx = canvas.getContext('2d', {alpha: false});
       var outputScale = getOutputScale(ctx);
@@ -598,17 +595,6 @@ var PDFPageView = (function PDFPageViewClosure() {
     },
 
     paintOnSvg: function PDFPageView_paintOnSvg(wrapper) {
-      if (typeof PDFJSDev !== 'undefined' &&
-          PDFJSDev.test('FIREFOX || MOZCENTRAL || CHROME')) {
-        // Return a mock object, to prevent errors such as e.g.
-        // "TypeError: paintTask.promise is undefined".
-        return {
-          promise: Promise.reject(new Error('SVG rendering is not supported.')),
-          onRenderContinue(cont) { },
-          cancel() { },
-        };
-      }
-
       var cancelled = false;
       var ensureNotCancelled = function () {
         if (cancelled) {

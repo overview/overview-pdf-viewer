@@ -50,19 +50,9 @@ var DISABLE_AUTO_FETCH_LOADING_BAR_TIMEOUT = 5000;
 
 function configure(PDFJS) {
   PDFJS.imageResourcesPath = './images/';
-  if (typeof PDFJSDev !== 'undefined' &&
-      PDFJSDev.test('FIREFOX || MOZCENTRAL || GENERIC || CHROME')) {
-    PDFJS.workerSrc = '../build/pdf.worker.js';
-  }
-  if (typeof PDFJSDev === 'undefined' || !PDFJSDev.test('PRODUCTION')) {
-    PDFJS.cMapUrl = '../external/bcmaps/';
-    PDFJS.cMapPacked = true;
-    PDFJS.workerSrc = '../src/worker_loader.js';
-    PDFJS.pdfjsNext = true;
-  } else {
-    PDFJS.cMapUrl = '../web/cmaps/';
-    PDFJS.cMapPacked = true;
-  }
+  PDFJS.workerSrc = '../build/pdf.worker.js';
+  PDFJS.cMapUrl = '../web/cmaps/';
+  PDFJS.cMapPacked = true;
 }
 
 var DefaultExternalServices = {
@@ -456,40 +446,7 @@ var PDFViewerApplication = {
   },
 
   initPassiveLoading: function pdfViewInitPassiveLoading() {
-    if (typeof PDFJSDev !== 'undefined' &&
-        PDFJSDev.test('FIREFOX || MOZCENTRAL || CHROME')) {
-      this.externalServices.initPassiveLoading({
-        onOpenWithTransport(url, length, transport) {
-          PDFViewerApplication.open(url, { range: transport, });
-
-          if (length) {
-            PDFViewerApplication.pdfDocumentProperties.setFileSize(length);
-          }
-        },
-        onOpenWithData(data) {
-          PDFViewerApplication.open(data);
-        },
-        onOpenWithURL(url, length, originalURL) {
-          var file = url, args = null;
-          if (length !== undefined) {
-            args = { length, };
-          }
-          if (originalURL !== undefined) {
-            file = { file: url, originalURL, };
-          }
-          PDFViewerApplication.open(file, args);
-        },
-        onError(err) {
-          PDFViewerApplication.error(mozL10n.get('loading_error', null,
-            'An error occurred while loading the PDF.'), err);
-        },
-        onProgress(loaded, total) {
-          PDFViewerApplication.progress(loaded / total);
-        }
-      });
-    } else {
-      throw new Error('Not implemented: initPassiveLoading');
-    }
+    throw new Error('Not implemented: initPassiveLoading');
   },
 
   setTitleUsingUrl: function pdfViewSetTitleUsingUrl(url) {
@@ -591,10 +548,6 @@ var PDFViewerApplication = {
       this.setTitleUsingUrl(file.originalUrl);
       parameters.url = file.url;
     }
-    if (typeof PDFJSDev !== 'undefined' &&
-        PDFJSDev.test('FIREFOX || MOZCENTRAL || CHROME')) {
-      parameters.docBaseUrl = this.baseUrl;
-    }
 
     if (args) {
       for (var prop in args) {
@@ -694,26 +647,7 @@ var PDFViewerApplication = {
     ).then(null, downloadByUrl);
   },
 
-  fallback: function pdfViewFallback(featureId) {
-    if (typeof PDFJSDev !== 'undefined' &&
-        PDFJSDev.test('FIREFOX || MOZCENTRAL')) {
-      // Only trigger the fallback once so we don't spam the user with messages
-      // for one PDF.
-      if (this.fellback) {
-        return;
-      }
-      this.fellback = true;
-      this.externalServices.fallback({
-        featureId,
-        url: this.baseUrl,
-      }, function response(download) {
-        if (!download) {
-          return;
-        }
-        PDFViewerApplication.download();
-      });
-    }
-  },
+  fallback: function pdfViewFallback(featureId) {},
 
   /**
    * Show the error box.
@@ -748,44 +682,38 @@ var PDFViewerApplication = {
       }
     }
 
-    if (typeof PDFJSDev === 'undefined' ||
-        !PDFJSDev.test('FIREFOX || MOZCENTRAL')) {
-      var errorWrapperConfig = this.appConfig.errorWrapper;
-      var errorWrapper = errorWrapperConfig.container;
-      errorWrapper.removeAttribute('hidden');
+    var errorWrapperConfig = this.appConfig.errorWrapper;
+    var errorWrapper = errorWrapperConfig.container;
+    errorWrapper.removeAttribute('hidden');
 
-      var errorMessage = errorWrapperConfig.errorMessage;
-      errorMessage.textContent = message;
+    var errorMessage = errorWrapperConfig.errorMessage;
+    errorMessage.textContent = message;
 
-      var closeButton = errorWrapperConfig.closeButton;
-      closeButton.onclick = function() {
-        errorWrapper.setAttribute('hidden', 'true');
-      };
+    var closeButton = errorWrapperConfig.closeButton;
+    closeButton.onclick = function() {
+      errorWrapper.setAttribute('hidden', 'true');
+    };
 
-      var errorMoreInfo = errorWrapperConfig.errorMoreInfo;
-      var moreInfoButton = errorWrapperConfig.moreInfoButton;
-      var lessInfoButton = errorWrapperConfig.lessInfoButton;
-      moreInfoButton.onclick = function() {
-        errorMoreInfo.removeAttribute('hidden');
-        moreInfoButton.setAttribute('hidden', 'true');
-        lessInfoButton.removeAttribute('hidden');
-        errorMoreInfo.style.height = errorMoreInfo.scrollHeight + 'px';
-      };
-      lessInfoButton.onclick = function() {
-        errorMoreInfo.setAttribute('hidden', 'true');
-        moreInfoButton.removeAttribute('hidden');
-        lessInfoButton.setAttribute('hidden', 'true');
-      };
-      moreInfoButton.oncontextmenu = noContextMenuHandler;
-      lessInfoButton.oncontextmenu = noContextMenuHandler;
-      closeButton.oncontextmenu = noContextMenuHandler;
+    var errorMoreInfo = errorWrapperConfig.errorMoreInfo;
+    var moreInfoButton = errorWrapperConfig.moreInfoButton;
+    var lessInfoButton = errorWrapperConfig.lessInfoButton;
+    moreInfoButton.onclick = function() {
+      errorMoreInfo.removeAttribute('hidden');
+      moreInfoButton.setAttribute('hidden', 'true');
+      lessInfoButton.removeAttribute('hidden');
+      errorMoreInfo.style.height = errorMoreInfo.scrollHeight + 'px';
+    };
+    lessInfoButton.onclick = function() {
+      errorMoreInfo.setAttribute('hidden', 'true');
       moreInfoButton.removeAttribute('hidden');
       lessInfoButton.setAttribute('hidden', 'true');
-      errorMoreInfo.value = moreInfoText;
-    } else {
-      console.error(message + '\n' + moreInfoText);
-      this.fallback();
-    }
+    };
+    moreInfoButton.oncontextmenu = noContextMenuHandler;
+    lessInfoButton.oncontextmenu = noContextMenuHandler;
+    closeButton.oncontextmenu = noContextMenuHandler;
+    moreInfoButton.removeAttribute('hidden');
+    lessInfoButton.setAttribute('hidden', 'true');
+    errorMoreInfo.value = moreInfoText;
   },
 
   progress: function pdfViewProgress(level) {
@@ -836,15 +764,7 @@ var PDFViewerApplication = {
     var id = this.documentFingerprint = pdfDocument.fingerprint;
     var store = this.store = new ViewHistory(id);
 
-    var baseDocumentUrl;
-    if (typeof PDFJSDev === 'undefined' || PDFJSDev.test('GENERIC')) {
-      baseDocumentUrl = null;
-    } else if (PDFJSDev.test('FIREFOX || MOZCENTRAL')) {
-      baseDocumentUrl = this.baseUrl;
-    } else if (PDFJSDev.test('CHROME')) {
-      baseDocumentUrl = location.href.split('#')[0];
-    }
-    this.pdfLinkService.setDocument(pdfDocument, baseDocumentUrl);
+    this.pdfLinkService.setDocument(pdfDocument, null);
 
     var pdfViewer = this.pdfViewer;
     pdfViewer.currentScale = scale;
@@ -1009,36 +929,6 @@ var PDFViewerApplication = {
       if (info.IsAcroFormPresent) {
         console.warn('Warning: AcroForm/XFA is not supported');
         self.fallback(UNSUPPORTED_FEATURES.forms);
-      }
-
-      if (typeof PDFJSDev !== 'undefined' &&
-          PDFJSDev.test('FIREFOX || MOZCENTRAL')) {
-        var versionId = String(info.PDFFormatVersion).slice(-1) | 0;
-        var generatorId = 0;
-        var KNOWN_GENERATORS = [
-          'acrobat distiller', 'acrobat pdfwriter', 'adobe livecycle',
-          'adobe pdf library', 'adobe photoshop', 'ghostscript', 'tcpdf',
-          'cairo', 'dvipdfm', 'dvips', 'pdftex', 'pdfkit', 'itext', 'prince',
-          'quarkxpress', 'mac os x', 'microsoft', 'openoffice', 'oracle',
-          'luradocument', 'pdf-xchange', 'antenna house', 'aspose.cells', 'fpdf'
-        ];
-        if (info.Producer) {
-          KNOWN_GENERATORS.some(function (generator, s, i) {
-            if (generator.indexOf(s) < 0) {
-              return false;
-            }
-            generatorId = i + 1;
-            return true;
-          }.bind(null, info.Producer.toLowerCase()));
-        }
-        var formType = !info.IsAcroFormPresent ? null : info.IsXFAPresent ?
-                      'xfa' : 'acroform';
-        self.externalServices.reportTelemetry({
-          type: 'documentInfo',
-          version: versionId,
-          generator: generatorId,
-          formType,
-        });
       }
     });
   },
@@ -1244,17 +1134,10 @@ function loadAndEnablePDFBug(enabledTabs) {
 
 function webViewerInitialized() {
   var appConfig = PDFViewerApplication.appConfig;
-  var file;
-  if (typeof PDFJSDev === 'undefined' || PDFJSDev.test('GENERIC')) {
-    var queryString = document.location.search.substring(1);
-    var params = parseQueryString(queryString);
-    file = 'file' in params ? params.file : appConfig.defaultUrl;
-    validateFileURL(file);
-  } else if (PDFJSDev.test('FIREFOX || MOZCENTRAL')) {
-    file = window.location.href.split('#')[0];
-  } else if (PDFJSDev.test('CHROME')) {
-    file = appConfig.defaultUrl;
-  }
+  var queryString = document.location.search.substring(1);
+  var params = parseQueryString(queryString);
+  var file = 'file' in params ? params.file : appConfig.defaultUrl;
+  validateFileURL(file);
 
   var waitForBeforeOpening = [];
 
@@ -1301,11 +1184,8 @@ function webViewerInitialized() {
         PDFJS.cMapPacked = false;
       }
     }
-    if (typeof PDFJSDev === 'undefined' ||
-        !PDFJSDev.test('FIREFOX || MOZCENTRAL')) {
-      if ('locale' in hashParams) {
-        PDFJS.locale = hashParams['locale'];
-      }
+    if ('locale' in hashParams) {
+      PDFJS.locale = hashParams['locale'];
     }
     if ('textlayer' in hashParams) {
       switch (hashParams['textlayer']) {
@@ -1328,16 +1208,7 @@ function webViewerInitialized() {
     }
   }
 
-  if (typeof PDFJSDev === 'undefined' ||
-      !PDFJSDev.test('FIREFOX || MOZCENTRAL')) {
-    mozL10n.setLanguage(PDFJS.locale);
-  } else {
-    if (!PDFViewerApplication.supportsDocumentFonts) {
-      PDFJS.disableFontFace = true;
-      console.warn(mozL10n.get('web_fonts_disabled', null,
-        'Web fonts are disabled: unable to use embedded PDF fonts.'));
-    }
-  }
+  mozL10n.setLanguage(PDFJS.locale);
 
   if (!PDFViewerApplication.supportsFullscreen) {
     appConfig.toolbar.presentationModeButton.classList.add('hidden');
@@ -1367,45 +1238,31 @@ function webViewerInitialized() {
   });
 }
 
-var webViewerOpenFileViaURL;
-if (typeof PDFJSDev === 'undefined' || PDFJSDev.test('GENERIC')) {
-  webViewerOpenFileViaURL = function webViewerOpenFileViaURL(file) {
-    if (file && file.lastIndexOf('file:', 0) === 0) {
-      // file:-scheme. Load the contents in the main thread because QtWebKit
-      // cannot load file:-URLs in a Web Worker. file:-URLs are usually loaded
-      // very quickly, so there is no need to set up progress event listeners.
-      PDFViewerApplication.setTitleUsingUrl(file);
-      var xhr = new XMLHttpRequest();
-      xhr.onload = function() {
-        PDFViewerApplication.open(new Uint8Array(xhr.response));
-      };
-      try {
-        xhr.open('GET', file);
-        xhr.responseType = 'arraybuffer';
-        xhr.send();
-      } catch (e) {
-        PDFViewerApplication.error(mozL10n.get('loading_error', null,
-          'An error occurred while loading the PDF.'), e);
-      }
-      return;
-    }
-
-    if (file) {
-      PDFViewerApplication.open(file);
-    }
-  };
-} else if (PDFJSDev.test('FIREFOX || MOZCENTRAL || CHROME')) {
-  webViewerOpenFileViaURL = function webViewerOpenFileViaURL(file) {
+var webViewerOpenFileViaURL = function webViewerOpenFileViaURL(file) {
+  if (file && file.lastIndexOf('file:', 0) === 0) {
+    // file:-scheme. Load the contents in the main thread because QtWebKit
+    // cannot load file:-URLs in a Web Worker. file:-URLs are usually loaded
+    // very quickly, so there is no need to set up progress event listeners.
     PDFViewerApplication.setTitleUsingUrl(file);
-    PDFViewerApplication.initPassiveLoading();
-  };
-} else {
-  webViewerOpenFileViaURL = function webViewerOpenFileURL(file) {
-    if (file) {
-      throw new Error('Not implemented: webViewerOpenFileURL');
+    var xhr = new XMLHttpRequest();
+    xhr.onload = function() {
+      PDFViewerApplication.open(new Uint8Array(xhr.response));
+    };
+    try {
+      xhr.open('GET', file);
+      xhr.responseType = 'arraybuffer';
+      xhr.send();
+    } catch (e) {
+      PDFViewerApplication.error(mozL10n.get('loading_error', null,
+        'An error occurred while loading the PDF.'), e);
     }
-  };
-}
+    return;
+  }
+
+  if (file) {
+    PDFViewerApplication.open(file);
+  }
+};
 
 function webViewerPageRendered(e) {
   var pageNumber = e.pageNumber;
@@ -1439,32 +1296,9 @@ function webViewerPageRendered(e) {
     PDFViewerApplication.error(mozL10n.get('rendering_error', null,
       'An error occurred while rendering the page.'), pageView.error);
   }
-
-  if (typeof PDFJSDev !== 'undefined' &&
-      PDFJSDev.test('FIREFOX || MOZCENTRAL')) {
-    PDFViewerApplication.externalServices.reportTelemetry({
-      type: 'pageInfo'
-    });
-    // It is a good time to report stream and font types.
-    PDFViewerApplication.pdfDocument.getStats().then(function (stats) {
-      PDFViewerApplication.externalServices.reportTelemetry({
-        type: 'documentStats',
-        stats,
-      });
-    });
-  }
 }
 
 function webViewerTextLayerRendered(e) {
-  if (typeof PDFJSDev !== 'undefined' &&
-      PDFJSDev.test('FIREFOX || MOZCENTRAL') &&
-      e.numTextDivs > 0 && !PDFViewerApplication.supportsDocumentColors) {
-    console.error(mozL10n.get('document_colors_not_allowed', null,
-      'PDF documents are not allowed to use their own colors: ' +
-      '\'Allow pages to choose their own colors\' ' +
-      'is deactivated in the browser.'));
-    PDFViewerApplication.fallback();
-  }
 }
 
 function webViewerPageMode(e) {
@@ -1855,16 +1689,13 @@ function webViewerKeyDown(evt) {
     }
   }
 
-  if (typeof PDFJSDev === 'undefined' ||
-      !PDFJSDev.test('FIREFOX || MOZCENTRAL')) {
-    // CTRL or META without shift
-    if (cmd === 1 || cmd === 8) {
-      switch (evt.keyCode) {
-        case 83: // s
-          PDFViewerApplication.download();
-          handled = true;
-          break;
-      }
+  // CTRL or META without shift
+  if (cmd === 1 || cmd === 8) {
+    switch (evt.keyCode) {
+      case 83: // s
+        PDFViewerApplication.download();
+        handled = true;
+        break;
     }
   }
 

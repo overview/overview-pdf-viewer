@@ -21,7 +21,6 @@ const DEFAULT_VIEW_HISTORY_CACHE_SIZE = 20;
  *
  * The way that the view parameters are stored depends on how PDF.js is built,
  * for 'gulp <flag>' the following cases exist:
- *  - FIREFOX or MOZCENTRAL - uses sessionStorage.
  *  - GENERIC or CHROME     - uses localStorage, if it is available.
  */
 class ViewHistory {
@@ -57,42 +56,32 @@ class ViewHistory {
     return new Promise((resolve) => {
       var databaseStr = JSON.stringify(this.database);
 
-      if (typeof PDFJSDev !== 'undefined' &&
-          PDFJSDev.test('FIREFOX || MOZCENTRAL')) {
-        sessionStorage.setItem('pdfjs.history', databaseStr);
-      } else {
-        localStorage.setItem('pdfjs.history', databaseStr);
-      }
+      localStorage.setItem('pdfjs.history', databaseStr);
       resolve();
     });
   }
 
   _readFromStorage() {
     return new Promise(function(resolve) {
-      if (typeof PDFJSDev !== 'undefined' &&
-          PDFJSDev.test('FIREFOX || MOZCENTRAL')) {
-        resolve(sessionStorage.getItem('pdfjs.history'));
-      } else {
-        var value = localStorage.getItem('pdfjs.history');
+      var value = localStorage.getItem('pdfjs.history');
 
-        // TODO: Remove this key-name conversion after a suitable time-frame.
-        // Note that we only remove the old 'database' entry if it looks like
-        // it was created by PDF.js, to avoid removing someone else's data.
-        if (!value) {
-          var databaseStr = localStorage.getItem('database');
-          if (databaseStr) {
-            try {
-              var database = JSON.parse(databaseStr);
-              if (typeof database.files[0].fingerprint === 'string') {
-                localStorage.setItem('pdfjs.history', databaseStr);
-                localStorage.removeItem('database');
-                value = databaseStr;
-              }
-            } catch (ex) { }
-          }
+      // TODO: Remove this key-name conversion after a suitable time-frame.
+      // Note that we only remove the old 'database' entry if it looks like
+      // it was created by PDF.js, to avoid removing someone else's data.
+      if (!value) {
+        var databaseStr = localStorage.getItem('database');
+        if (databaseStr) {
+          try {
+            var database = JSON.parse(databaseStr);
+            if (typeof database.files[0].fingerprint === 'string') {
+              localStorage.setItem('pdfjs.history', databaseStr);
+              localStorage.removeItem('database');
+              value = databaseStr;
+            }
+          } catch (ex) { }
         }
-        resolve(value);
       }
+      resolve(value);
     });
   }
 

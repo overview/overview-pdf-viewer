@@ -322,9 +322,7 @@ var TextLayerBuilder = (function TextLayerBuilderClosure() {
       div.addEventListener('mousedown', function (e) {
         if (self.enhanceTextSelection && self.textLayerRenderTask) {
           self.textLayerRenderTask.expandTextDivs(true);
-          if ((typeof PDFJSDev === 'undefined' ||
-               !PDFJSDev.test('FIREFOX || MOZCENTRAL')) &&
-              expandDivsTimer) {
+          if (expandDivsTimer) {
             clearTimeout(expandDivsTimer);
             expandDivsTimer = null;
           }
@@ -334,8 +332,6 @@ var TextLayerBuilder = (function TextLayerBuilderClosure() {
         if (!end) {
           return;
         }
-        if (typeof PDFJSDev === 'undefined' ||
-            !PDFJSDev.test('FIREFOX || MOZCENTRAL')) {
         // On non-Firefox browsers, the selection will feel better if the height
         // of the endOfContent div will be adjusted to start at mouse click
         // location -- this will avoid flickering when selections moves up.
@@ -350,33 +346,24 @@ var TextLayerBuilder = (function TextLayerBuilderClosure() {
           var r = Math.max(0, (e.pageY - divBounds.top) / divBounds.height);
           end.style.top = (r * 100).toFixed(2) + '%';
         }
-        }
         end.classList.add('active');
       });
 
       div.addEventListener('mouseup', function (e) {
         if (self.enhanceTextSelection && self.textLayerRenderTask) {
-          if (typeof PDFJSDev === 'undefined' ||
-              !PDFJSDev.test('FIREFOX || MOZCENTRAL')) {
-            expandDivsTimer = setTimeout(function() {
-              if (self.textLayerRenderTask) {
-                self.textLayerRenderTask.expandTextDivs(false);
-              }
-              expandDivsTimer = null;
-            }, EXPAND_DIVS_TIMEOUT);
-          } else {
-            self.textLayerRenderTask.expandTextDivs(false);
-          }
+          expandDivsTimer = setTimeout(function() {
+            if (self.textLayerRenderTask) {
+              self.textLayerRenderTask.expandTextDivs(false);
+            }
+            expandDivsTimer = null;
+          }, EXPAND_DIVS_TIMEOUT);
           return;
         }
         var end = div.querySelector('.endOfContent');
         if (!end) {
           return;
         }
-        if (typeof PDFJSDev === 'undefined' ||
-            !PDFJSDev.test('FIREFOX || MOZCENTRAL')) {
-          end.style.top = '';
-        }
+        end.style.top = '';
         end.classList.remove('active');
       });
     },

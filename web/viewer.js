@@ -18,32 +18,12 @@
 
 var DEFAULT_URL = 'compressed.tracemonkey-pldi-09.pdf';
 
-if (typeof PDFJSDev !== 'undefined' && PDFJSDev.test('CHROME')) {
-  (function rewriteUrlClosure() {
-    // Run this code outside DOMContentLoaded to make sure that the URL
-    // is rewritten as soon as possible.
-    var queryString = document.location.search.slice(1);
-    var m = /(^|&)file=([^&]*)/.exec(queryString);
-    DEFAULT_URL = m ? decodeURIComponent(m[2]) : '';
-
-    // Example: chrome-extension://.../http://example.com/file.pdf
-    var humanReadableUrl = '/' + DEFAULT_URL + location.hash;
-    history.replaceState(history.state, '', humanReadableUrl);
-    if (top === window) {
-      chrome.runtime.sendMessage('showPageAction');
-    }
-  })();
-}
-
 var pdfjsWebApp;
 if (typeof PDFJSDev !== 'undefined' && PDFJSDev.test('PRODUCTION')) {
   pdfjsWebApp = require('./app.js');
 }
 if (typeof PDFJSDev !== 'undefined' && PDFJSDev.test('GENERIC')) {
   require('./genericcom.js');
-}
-if (typeof PDFJSDev !== 'undefined' && PDFJSDev.test('CHROME')) {
-  require('./chromecom.js');
 }
 
 function getViewerConfiguration() {

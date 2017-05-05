@@ -15,7 +15,7 @@
 
 import { createObjectURL, createValidAbsoluteUrl, PDFJS } from './pdfjs';
 
-if (typeof PDFJSDev !== 'undefined' && !PDFJSDev.test('CHROME || GENERIC')) {
+if (typeof PDFJSDev !== 'undefined' && !PDFJSDev.test('GENERIC')) {
   throw new Error('Module "pdfjs-web/download_manager" shall not be used ' +
                   'outside CHROME and GENERIC builds.');
 }
