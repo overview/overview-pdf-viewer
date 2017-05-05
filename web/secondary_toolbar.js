@@ -23,8 +23,6 @@ import { mozL10n, SCROLLBAR_PADDING } from './ui_utils';
  * @property {HTMLDivElement} toolbarButtonContainer - Container where all the
  *   toolbar buttons are placed. The maximum height of the toolbar is controlled
  *   dynamically by adjusting the 'max-height' CSS property of this DOM element.
- * @property {HTMLButtonElement} presentationModeButton - Button for entering
- *   presentation mode.
  * @property {HTMLButtonElement} downloadButton - Button to download the
  *   document.
  * @property {HTMLButtonElement} firstPageButton - Button to go to the first
@@ -56,8 +54,6 @@ var SecondaryToolbar = (function SecondaryToolbarClosure() {
     this.toggleButton = options.toggleButton;
     this.toolbarButtonContainer = options.toolbarButtonContainer;
     this.buttons = [
-      { element: options.presentationModeButton, eventName: 'presentationmode',
-        close: true },
       { element: options.downloadButton, eventName: 'download', close: true },
       { element: options.firstPageButton, eventName: 'firstpage', close: true },
       { element: options.lastPageButton, eventName: 'lastpage', close: true },
