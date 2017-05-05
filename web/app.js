@@ -12,7 +12,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-/* globals PDFBug, Stats */
+/* globals Stats */
 
 import {
   animationStarted, DEFAULT_SCALE_VALUE, getPDFFileNameFromURL, localized,
@@ -117,7 +117,6 @@ var PDFViewerApplication = {
   isInitialViewSet: false,
   viewerPrefs: {
     sidebarViewOnLoad: SidebarView.NONE,
-    pdfBugEnabled: false,
     showPreviousViewOnLoad: true,
     defaultZoomValue: '',
     disablePageLabels: false,
@@ -175,9 +174,6 @@ var PDFViewerApplication = {
       }),
       preferences.get('sidebarViewOnLoad').then(function resolved(value) {
         viewerPrefs['sidebarViewOnLoad'] = value;
-      }),
-      preferences.get('pdfBugEnabled').then(function resolved(value) {
-        viewerPrefs['pdfBugEnabled'] = value;
       }),
       preferences.get('showPreviousViewOnLoad').then(function resolved(value) {
         viewerPrefs['showPreviousViewOnLoad'] = value;
@@ -507,9 +503,6 @@ var PDFViewerApplication = {
     this.toolbar.reset();
     this.secondaryToolbar.reset();
 
-    if (typeof PDFBug !== 'undefined') {
-      PDFBug.cleanup();
-    }
     return promise;
   },
 
@@ -1111,27 +1104,6 @@ if (typeof PDFJSDev === 'undefined' || PDFJSDev.test('GENERIC')) {
   };
 }
 
-function loadAndEnablePDFBug(enabledTabs) {
-  return new Promise(function (resolve, reject) {
-    var appConfig = PDFViewerApplication.appConfig;
-    var script = document.createElement('script');
-    script.src = appConfig.debuggerScriptPath;
-    script.onload = function () {
-      PDFBug.enable(enabledTabs);
-      PDFBug.init({
-        PDFJS,
-        OPS,
-      }, appConfig.mainContainer);
-      resolve();
-    };
-    script.onerror = function () {
-      reject(new Error('Cannot load debugger at ' + script.src));
-    };
-    (document.getElementsByTagName('head')[0] || document.body).
-      appendChild(script);
-  });
-}
-
 function webViewerInitialized() {
   var appConfig = PDFViewerApplication.appConfig;
   var queryString = document.location.search.substring(1);
@@ -1140,73 +1112,6 @@ function webViewerInitialized() {
   validateFileURL(file);
 
   var waitForBeforeOpening = [];
-
-  if ((typeof PDFJSDev === 'undefined' || !PDFJSDev.test('PRODUCTION')) ||
-      PDFViewerApplication.viewerPrefs['pdfBugEnabled']) {
-    // Special debugging flags in the hash section of the URL.
-    var hash = document.location.hash.substring(1);
-    var hashParams = parseQueryString(hash);
-
-    if ('disableworker' in hashParams) {
-      PDFJS.disableWorker = (hashParams['disableworker'] === 'true');
-    }
-    if ('disablerange' in hashParams) {
-      PDFJS.disableRange = (hashParams['disablerange'] === 'true');
-    }
-    if ('disablestream' in hashParams) {
-      PDFJS.disableStream = (hashParams['disablestream'] === 'true');
-    }
-    if ('disableautofetch' in hashParams) {
-      PDFJS.disableAutoFetch = (hashParams['disableautofetch'] === 'true');
-    }
-    if ('disablefontface' in hashParams) {
-      PDFJS.disableFontFace = (hashParams['disablefontface'] === 'true');
-    }
-    if ('disablehistory' in hashParams) {
-      PDFJS.disableHistory = (hashParams['disablehistory'] === 'true');
-    }
-    if ('webgl' in hashParams) {
-      PDFJS.disableWebGL = (hashParams['webgl'] !== 'true');
-    }
-    if ('useonlycsszoom' in hashParams) {
-      PDFJS.useOnlyCssZoom = (hashParams['useonlycsszoom'] === 'true');
-    }
-    if ('verbosity' in hashParams) {
-      PDFJS.verbosity = hashParams['verbosity'] | 0;
-    }
-    if ('ignorecurrentpositiononzoom' in hashParams) {
-      PDFJS.ignoreCurrentPositionOnZoom =
-        (hashParams['ignorecurrentpositiononzoom'] === 'true');
-    }
-    if (typeof PDFJSDev === 'undefined' || !PDFJSDev.test('PRODUCTION')) {
-      if ('disablebcmaps' in hashParams && hashParams['disablebcmaps']) {
-        PDFJS.cMapUrl = '../external/cmaps/';
-        PDFJS.cMapPacked = false;
-      }
-    }
-    if ('locale' in hashParams) {
-      PDFJS.locale = hashParams['locale'];
-    }
-    if ('textlayer' in hashParams) {
-      switch (hashParams['textlayer']) {
-        case 'off':
-          PDFJS.disableTextLayer = true;
-          break;
-        case 'visible':
-        case 'shadow':
-        case 'hover':
-          var viewer = appConfig.viewerContainer;
-          viewer.classList.add('textLayer-' + hashParams['textlayer']);
-          break;
-      }
-    }
-    if ('pdfbug' in hashParams) {
-      PDFJS.pdfBug = true;
-      var pdfBug = hashParams['pdfbug'];
-      var enabled = pdfBug.split(',');
-      waitForBeforeOpening.push(loadAndEnablePDFBug(enabled));
-    }
-  }
 
   mozL10n.setLanguage(PDFJS.locale);
 
@@ -1286,10 +1191,6 @@ function webViewerPageRendered(e) {
     var thumbnailView = PDFViewerApplication.pdfThumbnailViewer.
                         getThumbnail(pageIndex);
     thumbnailView.setImage(pageView);
-  }
-
-  if (PDFJS.pdfBug && Stats.enabled && pageView.stats) {
-    Stats.add(pageNumber, pageView.stats);
   }
 
   if (pageView.error) {
@@ -1526,14 +1427,6 @@ function webViewerPageChanging(e) {
 
   if (PDFViewerApplication.pdfSidebar.isThumbnailViewVisible) {
     PDFViewerApplication.pdfThumbnailViewer.scrollThumbnailIntoView(page);
-  }
-
-  // we need to update stats
-  if (PDFJS.pdfBug && Stats.enabled) {
-    var pageView = PDFViewerApplication.pdfViewer.getPageView(page - 1);
-    if (pageView.stats) {
-      Stats.add(page, pageView.stats);
-    }
   }
 }
 

@@ -127,7 +127,6 @@ function getViewerConfiguration() {
       moreInfoButton: document.getElementById('errorShowMore'),
       lessInfoButton: document.getElementById('errorShowLess'),
     },
-    debuggerScriptPath: './debugger.js',
     defaultUrl: DEFAULT_URL
   };
 }
