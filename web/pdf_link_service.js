@@ -338,18 +338,6 @@ var PDFLinkService = (function PDFLinkServiceClosure() {
     },
 
     /**
-     * @param {Object} params
-     */
-    onFileAttachmentAnnotation(params = {}) {
-      this.eventBus.dispatch('fileattachmentannotation', {
-        source: this,
-        id: params.id,
-        filename: params.filename,
-        content: params.content,
-      });
-    },
-
-    /**
      * @param {number} pageNum - page number.
      * @param {Object} pageRef - reference to the page.
      */
@@ -461,10 +449,6 @@ var SimpleLinkService = (function SimpleLinkServiceClosure() {
      * @param {string} action
      */
     executeNamedAction(action) {},
-    /**
-     * @param {Object} params
-     */
-    onFileAttachmentAnnotation(params) {},
     /**
      * @param {number} pageNum - page number.
      * @param {Object} pageRef - reference to the page.

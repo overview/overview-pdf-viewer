@@ -33,7 +33,6 @@ import { getGlobalEventBus } from './dom_events';
 import { HandTool } from './hand_tool';
 import { OverlayManager } from './overlay_manager';
 import { PasswordPrompt } from './password_prompt';
-import { PDFAttachmentViewer } from './pdf_attachment_viewer';
 import { PDFDocumentProperties } from './pdf_document_properties';
 import { PDFFindBar } from './pdf_find_bar';
 import { PDFFindController } from './pdf_find_controller';
@@ -112,8 +111,6 @@ var PDFViewerApplication = {
   pdfSidebar: null,
   /** @type {PDFOutlineViewer} */
   pdfOutlineViewer: null,
-  /** @type {PDFAttachmentViewer} */
-  pdfAttachmentViewer: null,
   /** @type {ViewHistory} */
   store: null,
   /** @type {DownloadManager} */
@@ -363,12 +360,6 @@ var PDFViewerApplication = {
         linkService: pdfLinkService,
       });
 
-      self.pdfAttachmentViewer = new PDFAttachmentViewer({
-        container: appConfig.sidebar.attachmentsView,
-        eventBus,
-        downloadManager,
-      });
-
       // FIXME better PDFSidebar constructor parameters
       var sidebarConfig = Object.create(appConfig.sidebar);
       sidebarConfig.pdfViewer = self.pdfViewer;
@@ -553,7 +544,6 @@ var PDFViewerApplication = {
 
     this.pdfSidebar.reset();
     this.pdfOutlineViewer.reset();
-    this.pdfAttachmentViewer.reset();
 
     this.findController.reset();
     this.findBar.reset();
@@ -984,9 +974,6 @@ var PDFViewerApplication = {
     Promise.all([onePageRendered, animationStarted]).then(function() {
       pdfDocument.getOutline().then(function(outline) {
         self.pdfOutlineViewer.render({ outline, });
-      });
-      pdfDocument.getAttachments().then(function(attachments) {
-        self.pdfAttachmentViewer.render({ attachments, });
       });
     });
 
@@ -1489,9 +1476,6 @@ function webViewerPageMode(e) {
       break;
     case 'outline':
       view = SidebarView.OUTLINE;
-      break;
-    case 'attachments':
-      view = SidebarView.ATTACHMENTS;
       break;
     case 'none':
       view = SidebarView.NONE;

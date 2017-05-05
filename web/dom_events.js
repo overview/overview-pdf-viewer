@@ -83,13 +83,6 @@ function attachDOMEventsToEventBus(eventBus) {
     });
     window.dispatchEvent(event);
   });
-  eventBus.on('attachmentsloaded', function (e) {
-    var event = document.createEvent('CustomEvent');
-    event.initCustomEvent('attachmentsloaded', true, true, {
-      attachmentsCount: e.attachmentsCount
-    });
-    e.source.container.dispatchEvent(event);
-  });
   eventBus.on('sidebarviewchanged', function (e) {
     var event = document.createEvent('CustomEvent');
     event.initCustomEvent('sidebarviewchanged', true, true, {

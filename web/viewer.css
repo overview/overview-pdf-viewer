@@ -903,10 +903,6 @@ html[dir="rtl"] #viewOutline.toolbarButton::before {
   content: url(images/toolbarButton-viewOutline-rtl.png);
 }
 
-#viewAttachments.toolbarButton::before {
-  content: url(images/toolbarButton-viewAttachments.png);
-}
-
 #viewFind.toolbarButton::before {
   content: url(images/toolbarButton-search.png);
 }
@@ -1146,8 +1142,7 @@ a:focus > .thumbnail > .thumbnailSelectionRing,
   color: hsla(0,0%,100%,1);
 }
 
-#outlineView,
-#attachmentsView {
+#outlineView {
   position: absolute;
   width: 192px;
   top: 0;
@@ -1161,9 +1156,6 @@ a:focus > .thumbnail > .thumbnailSelectionRing,
 #outlineView {
   padding: 4px 4px 0;
 }
-#attachmentsView {
-  padding: 3px 4px 0;
-}
 
 html[dir='ltr'] .outlineWithDeepNesting > .outlineItem,
 html[dir='ltr'] .outlineItem > .outlineItems {
@@ -1175,8 +1167,7 @@ html[dir='rtl'] .outlineItem > .outlineItems {
   margin-right: 20px;
 }
 
-.outlineItem > a,
-.attachmentsItem > button {
+.outlineItem > a {
   text-decoration: none;
   display: inline-block;
   min-width: 95%;
@@ -1192,27 +1183,12 @@ html[dir='rtl'] .outlineItem > .outlineItems {
   white-space: normal;
 }
 
-.attachmentsItem > button {
-  border: 0 none;
-  background: none;
-  cursor: pointer;
-  width: 100%;
-}
-
 html[dir='ltr'] .outlineItem > a {
   padding: 2px 0 5px 4px;
-}
-html[dir='ltr'] .attachmentsItem > button {
-  padding: 2px 0 3px 7px;
-  text-align: left;
 }
 
 html[dir='rtl'] .outlineItem > a {
   padding: 2px 4px 5px 0;
-}
-html[dir='rtl'] .attachmentsItem > button {
-  padding: 2px 7px 3px 0;
-  text-align: right;
 }
 
 .outlineItemToggler {
@@ -1251,8 +1227,7 @@ html[dir='rtl'] .outlineItemToggler::before {
 .outlineItemToggler:hover,
 .outlineItemToggler:hover + a,
 .outlineItemToggler:hover ~ .outlineItems,
-.outlineItem > a:hover,
-.attachmentsItem > button:hover {
+.outlineItem > a:hover {
   background-color: hsla(0,0%,100%,.02);
   background-image: linear-gradient(hsla(0,0%,100%,.05), hsla(0,0%,100%,0));
   background-clip: padding-box;
@@ -1651,10 +1626,6 @@ html[dir='rtl'] #documentPropertiesOverlay .row > * {
   }
   html[dir="rtl"] #viewOutline.toolbarButton::before {
     content: url(images/toolbarButton-viewOutline-rtl@2x.png);
-  }
-
-  #viewAttachments.toolbarButton::before {
-    content: url(images/toolbarButton-viewAttachments@2x.png);
   }
 
   #viewFind.toolbarButton::before {
