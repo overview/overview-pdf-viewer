@@ -38,7 +38,6 @@ var SCALE_SELECT_PADDING = 22;
  * @property {HTMLButtonElement} zoomIn - Button to zoom in the pages.
  * @property {HTMLButtonElement} zoomOut - Button to zoom out the pages.
  * @property {HTMLButtonElement} viewFind - Button to open find bar.
- * @property {HTMLButtonElement} openFile - Button to open a new document.
  * @property {HTMLButtonElement} presentationModeButton - Button to switch to
  *   presentation mode.
  * @property {HTMLButtonElement} download - Button to download the document.
@@ -143,10 +142,6 @@ var Toolbar = (function ToolbarClosure() {
       items.presentationModeButton.addEventListener('click',
           function (e) {
         eventBus.dispatch('presentationmode');
-      });
-
-      items.openFile.addEventListener('click', function (e) {
-        eventBus.dispatch('openfile');
       });
 
       items.print.addEventListener('click', function (e) {

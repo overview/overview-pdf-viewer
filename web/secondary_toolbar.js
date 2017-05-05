@@ -25,7 +25,6 @@ import { mozL10n, SCROLLBAR_PADDING } from './ui_utils';
  *   dynamically by adjusting the 'max-height' CSS property of this DOM element.
  * @property {HTMLButtonElement} presentationModeButton - Button for entering
  *   presentation mode.
- * @property {HTMLButtonElement} openFileButton - Button to open a file.
  * @property {HTMLButtonElement} printButton - Button to print the document.
  * @property {HTMLButtonElement} downloadButton - Button to download the
  *   document.
@@ -62,7 +61,6 @@ var SecondaryToolbar = (function SecondaryToolbarClosure() {
     this.buttons = [
       { element: options.presentationModeButton, eventName: 'presentationmode',
         close: true },
-      { element: options.openFileButton, eventName: 'openfile', close: true },
       { element: options.printButton, eventName: 'print', close: true },
       { element: options.downloadButton, eventName: 'download', close: true },
       { element: options.viewBookmarkButton, eventName: null, close: true },

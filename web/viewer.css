@@ -892,11 +892,6 @@ html[dir='rtl'] .toolbarButton.pageDown::before {
   content: url(images/toolbarButton-print.png);
 }
 
-.toolbarButton.openFile::before,
-.secondaryToolbarButton.openFile::before {
-  content: url(images/toolbarButton-openFile.png);
-}
-
 .toolbarButton.download::before,
 .secondaryToolbarButton.download::before {
   content: url(images/toolbarButton-download.png);
@@ -1683,11 +1678,6 @@ html[dir='rtl'] #documentPropertiesOverlay .row > * {
   .toolbarButton.print::before,
   .secondaryToolbarButton.print::before {
     content: url(images/toolbarButton-print@2x.png);
-  }
-
-  .toolbarButton.openFile::before,
-  .secondaryToolbarButton.openFile::before {
-    content: url(images/toolbarButton-openFile@2x.png);
   }
 
   .toolbarButton.download::before,

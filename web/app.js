@@ -1242,7 +1242,6 @@ var PDFViewerApplication = {
     eventBus.on('namedaction', webViewerNamedAction);
     eventBus.on('presentationmodechanged', webViewerPresentationModeChanged);
     eventBus.on('presentationmode', webViewerPresentationMode);
-    eventBus.on('openfile', webViewerOpenFile);
     eventBus.on('print', webViewerPrint);
     eventBus.on('download', webViewerDownload);
     eventBus.on('firstpage', webViewerFirstPage);
@@ -1366,25 +1365,6 @@ function webViewerInitialized() {
   }
 
   var waitForBeforeOpening = [];
-  if (typeof PDFJSDev === 'undefined' || PDFJSDev.test('GENERIC')) {
-    var fileInput = document.createElement('input');
-    fileInput.id = appConfig.openFileInputName;
-    fileInput.className = 'fileInput';
-    fileInput.setAttribute('type', 'file');
-    fileInput.oncontextmenu = noContextMenuHandler;
-    document.body.appendChild(fileInput);
-
-    if (!window.File || !window.FileReader ||
-        !window.FileList || !window.Blob) {
-      appConfig.toolbar.openFile.setAttribute('hidden', 'true');
-      appConfig.secondaryToolbar.openFileButton.setAttribute('hidden', 'true');
-    } else {
-      fileInput.value = null;
-    }
-  } else {
-    appConfig.toolbar.openFile.setAttribute('hidden', 'true');
-    appConfig.secondaryToolbar.openFileButton.setAttribute('hidden', 'true');
-  }
 
   if ((typeof PDFJSDev === 'undefined' || !PDFJSDev.test('PRODUCTION')) ||
       PDFViewerApplication.viewerPrefs['pdfBugEnabled']) {
@@ -1752,10 +1732,6 @@ if (typeof PDFJSDev === 'undefined' || PDFJSDev.test('GENERIC')) {
 
 function webViewerPresentationMode() {
   PDFViewerApplication.requestPresentationMode();
-}
-function webViewerOpenFile() {
-  var openFileInputName = PDFViewerApplication.appConfig.openFileInputName;
-  document.getElementById(openFileInputName).click();
 }
 function webViewerPrint() {
   window.print();
