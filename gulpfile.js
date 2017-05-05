@@ -408,59 +408,6 @@ gulp.task('buildnumber', function (done) {
   });
 });
 
-gulp.task('locale', function () {
-  var VIEWER_LOCALE_OUTPUT = 'web/locale/';
-
-  console.log();
-  console.log('### Building localization files');
-
-  rimraf.sync(VIEWER_LOCALE_OUTPUT);
-  mkdirp.sync(VIEWER_LOCALE_OUTPUT);
-
-  var subfolders = fs.readdirSync(L10N_DIR);
-  subfolders.sort();
-  var metadataContent = '';
-  var chromeManifestContent = '';
-  var viewerOutput = '';
-  var locales = [];
-  for (var i = 0; i < subfolders.length; i++) {
-    var locale = subfolders[i];
-    var path = L10N_DIR + locale;
-    if (!checkDir(path)) {
-      continue;
-    }
-    if (!/^[a-z][a-z]([a-z])?(-[A-Z][A-Z])?$/.test(locale)) {
-      console.log('Skipping invalid locale: ' + locale);
-      continue;
-    }
-
-    mkdirp.sync(VIEWER_LOCALE_OUTPUT + '/' + locale);
-
-    locales.push(locale);
-
-    chromeManifestContent += 'locale  pdf.js  ' + locale + '  locale/' +
-                             locale + '/\n';
-
-    if (checkFile(path + '/viewer.properties')) {
-      viewerOutput += '[' + locale + ']\n' +
-                      '@import url(' + locale + '/viewer.properties)\n\n';
-    }
-
-    if (checkFile(path + '/metadata.inc')) {
-      var metadata = fs.readFileSync(path + '/metadata.inc').toString();
-      metadataContent += metadata;
-    }
-  }
-
-  return merge([
-    createStringSource('locale.properties', viewerOutput)
-      .pipe(gulp.dest(VIEWER_LOCALE_OUTPUT)),
-    gulp.src(L10N_DIR + '/{' + locales.join(',') + '}' +
-             '/viewer.properties', {base: L10N_DIR})
-      .pipe(gulp.dest(VIEWER_LOCALE_OUTPUT))
-  ]);
-});
-
 gulp.task('cmaps', function () {
   var CMAP_INPUT = 'external/cmaps';
   var VIEWER_CMAP_OUTPUT = 'external/bcmaps';
@@ -531,7 +478,7 @@ function preprocessJS(source, defines, cleanup) {
 
 // Builds the generic production viewer that should be compatible with most
 // modern HTML5 browsers.
-gulp.task('generic', ['buildnumber', 'locale'], function () {
+gulp.task('generic', ['buildnumber'], function () {
   console.log();
   console.log('### Creating generic viewer');
   var defines = builder.merge(DEFINES, {GENERIC: true});
@@ -547,10 +494,6 @@ gulp.task('generic', ['buildnumber', 'locale'], function () {
     gulp.src([
       'external/webL10n/l10n.js'
     ]).pipe(gulp.dest(GENERIC_DIR + 'web')),
-    gulp.src([
-      'web/locale/*/viewer.properties',
-      'web/locale/locale.properties'
-    ], {base: 'web/'}).pipe(gulp.dest(GENERIC_DIR + 'web')),
     gulp.src(['external/bcmaps/*.bcmap', 'external/bcmaps/LICENSE'],
              {base: 'external/bcmaps'})
         .pipe(gulp.dest(GENERIC_DIR + 'web/cmaps')),
@@ -598,7 +541,7 @@ gulp.task('singlefile', ['buildnumber'], function () {
   return createBundle(defines).pipe(gulp.dest(SINGLE_FILE_BUILD_DIR));
 });
 
-gulp.task('minified-pre', ['buildnumber', 'locale'], function () {
+gulp.task('minified-pre', ['buildnumber'], function () {
   console.log();
   console.log('### Creating minified viewer');
   var defines = builder.merge(DEFINES, {MINIFIED: true, GENERIC: true});
@@ -610,10 +553,6 @@ gulp.task('minified-pre', ['buildnumber', 'locale'], function () {
     createWebBundle(defines).pipe(gulp.dest(MINIFIED_DIR + 'web')),
     gulp.src(COMMON_WEB_FILES, {base: 'web/'})
         .pipe(gulp.dest(MINIFIED_DIR + 'web')),
-    gulp.src([
-      'web/locale/*/viewer.properties',
-      'web/locale/locale.properties'
-    ], {base: 'web/'}).pipe(gulp.dest(MINIFIED_DIR + 'web')),
     gulp.src(['external/bcmaps/*.bcmap', 'external/bcmaps/LICENSE'],
              {base: 'external/bcmaps'})
         .pipe(gulp.dest(MINIFIED_DIR + 'web/cmaps')),
@@ -873,18 +812,6 @@ gulp.task('clean', function(callback) {
   console.log('### Cleaning up project builds');
 
   rimraf(BUILD_DIR, callback);
-});
-
-gulp.task('importl10n', function(done) {
-  var locales = require('./external/importL10n/locales.js');
-
-  console.log();
-  console.log('### Importing translations from mozilla-aurora');
-
-  if (!fs.existsSync(L10N_DIR)) {
-    fs.mkdirSync(L10N_DIR);
-  }
-  locales.downloadL10n(L10N_DIR, done);
 });
 
 gulp.task('externaltest', function () {

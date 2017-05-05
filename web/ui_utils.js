@@ -30,8 +30,14 @@ var RendererType = {
   SVG: 'svg',
 };
 
-var mozL10n = typeof document !== 'undefined' ?
-  (document.mozL10n || document.webL10n) : undefined;
+var mozL10n = {
+  setLanguage: function() {},
+  getDirection: function() { return 'ltr'; },
+  getReadyState: function() { return 'complete'; },
+  get: function(key, args, fallbackString) {
+    return fallbackString.replace(/{{([^}]+)}}/g, function(_, k) { return args[k] });
+  },
+};
 
 /**
  * Disables fullscreen support, and by extension Presentation Mode,
