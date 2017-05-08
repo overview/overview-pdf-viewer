@@ -72,8 +72,7 @@ class AddNoteTool {
       let node = ev.target;
       while (
         node !== null &&
-        node.nodeName === "DIV" &&
-        !node.classList.contains("noteLayer")
+        !(node.nodeName === "DIV" && node.classList.contains("noteLayer"))
       ) {
         node = node.parentNode;
       }
