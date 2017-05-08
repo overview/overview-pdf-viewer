@@ -12,6 +12,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+.textLayer {
+  position: absolute;
+  left: 0;
+  top: 0;
+  right: 0;
+  bottom: 0;
+}
+
 .noteLayer section {
   position: absolute;
   border: 2px solid yellow;

@@ -28,7 +28,6 @@ var NoteStore = (function NoteStoreClosure() {
      * Fetches notes for the given page.
      */
     getNotesForPage: function NoteStore_getNotesForPage(pdfPage) {
-      console.log(pdfPage);
       return Promise.resolve([
         {
           pageIndex: pdfPage.pageIndex,

@@ -69,14 +69,14 @@ var NoteElement = (function NoteElementClosure() {
       // Copied from annotation_layer.js; I don't quite understand it
       var rect = Util.normalizeRect([
         data.x,
-        page.view[3] - (data.x + data.width) + page.view[1],
         data.y,
-        page.view[3] - (data.y + data.height) + page.view[1]
+        data.x + data.width,
+        data.y + data.height
       ]);
       CustomStyle.setProp('transform', container,
                           'matrix(' + viewport.transform.join(',') + ')');
       CustomStyle.setProp('transformOrigin', container,
-                          -rect[0] + 'px' + -rect[1] + 'px');
+                          -rect[0] + 'px ' + -rect[1] + 'px');
       container.style.left = rect[0] + 'px';
       container.style.top = rect[1] + 'px';
       container.style.width = data.width + 'px';
@@ -143,7 +143,7 @@ var NoteLayer = (function NoteLayerClosure() {
           '[data-note-id="' + data.id + '"]');
         if (element) {
           CustomStyle.setProp('transform', element,
-            'matric(' + parameters.viewport.transform.join(',') + ')');
+            'matrix(' + parameters.viewport.transform.join(',') + ')');
         }
       }
       parameters.div.removeAttribute('hidden');
