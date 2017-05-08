@@ -45,7 +45,7 @@ function getViewerConfiguration() {
       zoomOut: document.getElementById('zoomOut'),
       viewFind: document.getElementById('viewFind'),
       presentationModeButton: document.getElementById('presentationMode'),
-      download: document.getElementById('download'),
+      addNote: document.getElementById('addNote'),
     },
     secondaryToolbar: {
       toolbar: document.getElementById('secondaryToolbar'),

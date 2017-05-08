@@ -882,6 +882,11 @@ html[dir='rtl'] .toolbarButton.pageDown::before {
   content: url(images/toolbarButton-zoomIn.png);
 }
 
+.toolbarButton.addNote::before {
+  content: url(images/toolbarButton-addNote@2x.png);
+  zoom: 0.6;
+}
+
 .toolbarButton.presentationMode::before,
 .secondaryToolbarButton.presentationMode::before {
   content: url(images/toolbarButton-presentationMode.png);

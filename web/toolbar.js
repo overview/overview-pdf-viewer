@@ -40,6 +40,7 @@ var SCALE_SELECT_PADDING = 22;
  * @property {HTMLButtonElement} viewFind - Button to open find bar.
  * @property {HTMLButtonElement} presentationModeButton - Button to switch to
  *   presentation mode.
+ * @property {HTMLButtonElement} addNote - Button to begin adding note.
  */
 
 /**
@@ -63,6 +64,7 @@ var Toolbar = (function ToolbarClosure() {
 
     // Bind the event listeners for click and hand tool actions.
     this._bindListeners();
+    this._bindAddNoteListener();
   }
 
   Toolbar.prototype = {
@@ -141,10 +143,41 @@ var Toolbar = (function ToolbarClosure() {
         eventBus.dispatch('presentationmode');
       });
 
+      items.addNote.addEventListener('click', function(e) {
+        eventBus.dispatch('toggleaddingnote', {
+          source: self,
+        });
+      });
+
       // Suppress context menus for some controls
       items.scaleSelect.oncontextmenu = noContextMenuHandler;
 
       localized.then(this._localized.bind(this));
+    },
+
+    _bindAddNoteListener: function Toolbar_bindAddNoteListener() {
+      var addingNoteButton = this.items.addNote;
+      if (!addingNoteButton) {
+        return;
+      }
+
+      var isAddingNoteActive = false;
+      this.eventBus.on('addingnotechanged', function(e) {
+        if (isAddingNoteActive === e.isActive) {
+          return;
+        }
+        isAddingNoteActive = e.isActive;
+        if (isAddingNoteActive) {
+          addingNoteButton.classList.add('toggled');
+          addingNoteButton.title = 'Click and drag on a page to add a note';
+          addingNoteButton.firstElementChild.textContent =
+            'Click and drag on a page to add a note';
+        } else {
+          addingNoteButton.classList.remove('toggled');
+          addingNoteButton.title = 'Add Note';
+          addingNoteButton.firstElementChild.textContent = 'Add Note';
+        }
+      });
     },
 
     _localized: function Toolbar_localized() {
