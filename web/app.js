@@ -56,6 +56,7 @@ import {
 import { CursorTool, PDFCursorTools } from "./pdf_cursor_tools.js";
 import { PDFRenderingQueue, RenderingStates } from "./pdf_rendering_queue.js";
 import { PDFSidebar, SidebarView } from "./pdf_sidebar.js";
+import { AddNoteTool } from "./add_note_tool.js";
 import { NoteStore } from "./note_store.js";
 import { OverlayManager } from "./overlay_manager.js";
 import { PasswordPrompt } from "./password_prompt.js";
@@ -412,6 +413,8 @@ const PDFViewerApplication = {
       eventBus,
     });
     pdfLinkService.setHistory(this.pdfHistory);
+
+    this.addNoteTool = new AddNoteTool({ container, eventBus });
 
     if (!this.supportsIntegratedFind) {
       this.findBar = new PDFFindBar(appConfig.findBar, eventBus, this.l10n);

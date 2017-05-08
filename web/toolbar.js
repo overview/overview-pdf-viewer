@@ -50,6 +50,7 @@ const SCALE_SELECT_WIDTH = 162; // px
  * @property {HTMLButtonElement} download - Button to download the document.
  * @property {HTMLAElement} viewBookmark - Element to link current url of
  *   the page view.
+ * @property {HTMLButtonElement} addNote - Button to begin adding note.
  */
 
 class Toolbar {
@@ -75,6 +76,7 @@ class Toolbar {
       },
       { element: options.download, eventName: "download" },
       { element: options.viewBookmark, eventName: null },
+      { element: options.addNote, eventName: "toggleaddingnote" },
     ];
     this.items = {
       numPages: options.numPages,
@@ -86,6 +88,7 @@ class Toolbar {
       next: options.next,
       zoomIn: options.zoomIn,
       zoomOut: options.zoomOut,
+      addNote: options.addNote,
     };
 
     this._wasLocalized = false;
@@ -93,6 +96,7 @@ class Toolbar {
 
     // Bind the event listeners for click and various other actions.
     this._bindListeners();
+    this._bindAddNoteListener();
   }
 
   setPageNumber(pageNumber, pageLabel) {
@@ -163,6 +167,28 @@ class Toolbar {
       this._wasLocalized = true;
       this._adjustScaleWidth();
       this._updateUIState(true);
+    });
+  }
+
+  _bindAddNoteListener() {
+    const { addNote } = this.items;
+
+    let isAddingNoteActive = false;
+    this.eventBus.on("addingnotechanged", function(e) {
+      if (isAddingNoteActive === e.isActive) {
+        return;
+      }
+      isAddingNoteActive = e.isActive;
+      if (isAddingNoteActive) {
+        addNote.classList.add("toggled");
+        addNote.title = "Click and drag on a page to add a note";
+        addNote.firstElementChild.textContent =
+          "Click and drag on a page to add a note";
+      } else {
+        addNote.classList.remove("toggled");
+        addNote.title = "Add Note";
+        addNote.firstElementChild.textContent = "Add Note";
+      }
     });
   }
 

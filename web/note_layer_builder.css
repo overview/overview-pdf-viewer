@@ -26,3 +26,14 @@
   background: rgba(255, 255, 0, .2);
   box-shadow: 0 0 3px yellow;
 }
+
+.noteLayer .addingNote {
+  position: absolute;
+  border: 2px solid yellow;
+  background: rgba(255, 255, 0, .2);
+  pointer-events: none;
+}
+
+#viewerContainer.addingNote {
+  cursor: crosshair;
+}
