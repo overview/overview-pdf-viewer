@@ -75,7 +75,7 @@ var AddNoteTool = (function AddNoteToolClosure() {
         ev.stopPropagation();
 
         var node = ev.target;
-        while (node !== null && node.nodeName === 'DIV' && !node.classList.contains('noteLayer')) {
+        while (node !== null && !(node.nodeName === 'DIV' && node.classList.contains('noteLayer'))) {
           node = node.parentNode;
         }
 
