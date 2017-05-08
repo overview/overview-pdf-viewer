@@ -30,6 +30,7 @@ var NoteStore = (function NoteStoreClosure() {
     getNotesForPage: function NoteStore_getNotesForPage(pdfPage) {
       return Promise.resolve([
         {
+          id: pdfPage.pageIndex,
           pageIndex: pdfPage.pageIndex,
           x: 72,
           y: 144,

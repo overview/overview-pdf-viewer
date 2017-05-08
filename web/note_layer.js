@@ -64,7 +64,7 @@ var NoteElement = (function NoteElementClosure() {
     _createContainer: function NoteElement_createContainer() {
       var data = this.data, page = this.page, viewport = this.viewport;
       var container = document.createElement('section');
-      container.setAttribute('data-annotation-id', data.id);
+      container.setAttribute('data-note-id', data.id);
 
       // Copied from annotation_layer.js; I don't quite understand it
       var rect = Util.normalizeRect([

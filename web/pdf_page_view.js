@@ -160,9 +160,12 @@ var PDFPageView = (function PDFPageViewClosure() {
       var currentZoomLayerNode = (keepZoomLayer && this.zoomLayer) || null;
       var currentAnnotationNode = (keepAnnotations && this.annotationLayer &&
                                    this.annotationLayer.div) || null;
+      var currentNoteNode = (keepAnnotations && this.noteLayer &&
+                             this.noteLayer.div) || null;
       for (var i = childNodes.length - 1; i >= 0; i--) {
         var node = childNodes[i];
-        if (currentZoomLayerNode === node || currentAnnotationNode === node) {
+        if (currentZoomLayerNode === node || currentAnnotationNode === node ||
+            currentNoteNode === node) {
           continue;
         }
         div.removeChild(node);
@@ -175,6 +178,12 @@ var PDFPageView = (function PDFPageViewClosure() {
         this.annotationLayer.hide();
       } else {
         this.annotationLayer = null;
+      }
+
+      if (currentNoteNode) {
+        this.noteLayer.hide();
+      } else {
+        this.noteLayer = null;
       }
 
       if (!currentZoomLayerNode) {
@@ -346,6 +355,10 @@ var PDFPageView = (function PDFPageViewClosure() {
       if (redrawAnnotations && this.annotationLayer) {
         this.annotationLayer.render(this.viewport, 'display');
       }
+
+      if (this.noteLayer) {
+        this.noteLayer.render(this.viewport);
+      }
     },
 
     get width() {
@@ -378,9 +391,11 @@ var PDFPageView = (function PDFPageViewClosure() {
       canvasWrapper.style.height = div.style.height;
       canvasWrapper.classList.add('canvasWrapper');
 
+      // need ordering: canvas, text, annotations, notes
       if (this.annotationLayer && this.annotationLayer.div) {
-        // annotationLayer needs to stay on top
         div.insertBefore(canvasWrapper, this.annotationLayer.div);
+      } else if (this.noteLayer && this.noteLayer.div) {
+        div.insertBefore(canvasWrapper, this.noteLayer.div);
       } else {
         div.appendChild(canvasWrapper);
       }
@@ -392,9 +407,12 @@ var PDFPageView = (function PDFPageViewClosure() {
         textLayerDiv.className = 'textLayer';
         textLayerDiv.style.width = canvasWrapper.style.width;
         textLayerDiv.style.height = canvasWrapper.style.height;
+
+        // need ordering: canvas, text, annotations, div
         if (this.annotationLayer && this.annotationLayer.div) {
-          // annotationLayer needs to stay on top
           div.insertBefore(textLayerDiv, this.annotationLayer.div);
+        } else if (this.noteLayer && this.noteLayer.div) {
+          div.insertBefore(textLayerDiv, this.noteLayer.div);
         } else {
           div.appendChild(textLayerDiv);
         }
@@ -495,7 +513,7 @@ var PDFPageView = (function PDFPageViewClosure() {
           this.noteLayer = this.noteLayerFactory.
             createNoteLayerBuilder(div, pdfPage);
         }
-        this.noteLayer.render(this.viewport, 'display');
+        this.noteLayer.render(this.viewport);
       }
 
       div.setAttribute('data-loaded', true);
