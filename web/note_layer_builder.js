@@ -41,29 +41,22 @@ class NoteLayerBuilder {
       return;
     }
 
-    this.noteStore.getNotesForPage(this.pdfPage).then(notes => {
-      const parameters = {
-        viewport: viewport.clone({ dontFlip: true }),
-        div: this.div,
-        notes,
-        page: this.pdfPage,
-      };
+    if (this.div) {
+      this.div.innerHTML = "";
+    } else {
+      this.div = document.createElement("div");
+      this.div.className = "noteLayer";
+      this.pageDiv.appendChild(this.div);
+    }
 
-      if (this.div) {
-        // If a noteLayer already exists, refresh its children's
-        // transformation matrices
-        NoteLayer.update(parameters);
-      } else {
-        // Create a note layer div and render the notes, even if there are
-        // zero notes.
-        this.div = document.createElement("div");
-        this.div.className = "noteLayer";
-        this.pageDiv.appendChild(this.div);
-        parameters.div = this.div;
+    const parameters = {
+      viewport,
+      div: this.div,
+      notes: this.noteStore.getNotesForPageIndex(this.pdfPage.pageNumber - 1),
+      page: this.pdfPage,
+    };
 
-        NoteLayer.render(parameters);
-      }
-    });
+    NoteLayer.render(parameters);
   }
 
   hide() {
@@ -77,15 +70,26 @@ class NoteLayerBuilder {
 /**
  * @implements INoteLayerFactory
  */
-class DefaultNoteLayerFactory {
+class NoteLayerFactory {
+  /**
+   * @param {NoteStore} noteStore
+   */
+  constructor(noteStore) {
+    this.noteStore = noteStore;
+  }
+
   /**
    * @param {HTMLDivElement} pageDiv
    * @param {PDFPage} pdfPage
    * @returns {NoteLayerBuilder}
    */
   createNoteLayerBuilder(pageDiv, pdfPage) {
-    return new NoteLayerBuilder({ pageDiv, pdfPage, noteStore: null });
+    return new NoteLayerBuilder({
+      pageDiv,
+      pdfPage,
+      noteStore: this.noteStore,
+    });
   }
 }
 
-export { NoteLayerBuilder, DefaultNoteLayerFactory };
+export { NoteLayerBuilder, NoteLayerFactory };

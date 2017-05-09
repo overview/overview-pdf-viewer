@@ -57,7 +57,6 @@ import { CursorTool, PDFCursorTools } from "./pdf_cursor_tools.js";
 import { PDFRenderingQueue, RenderingStates } from "./pdf_rendering_queue.js";
 import { PDFSidebar, SidebarView } from "./pdf_sidebar.js";
 import { AddNoteTool } from "./add_note_tool.js";
-import { NoteStore } from "./note_store.js";
 import { OverlayManager } from "./overlay_manager.js";
 import { PasswordPrompt } from "./password_prompt.js";
 import { PDFAttachmentViewer } from "./pdf_attachment_viewer.js";
@@ -167,8 +166,6 @@ const PDFViewerApplication = {
   downloadManager: null,
   /** @type {OverlayManager} */
   overlayManager: null,
-  /** @type {NoteStore} */
-  noteStore: null,
   /** @type {Preferences} */
   preferences: null,
   /** @type {Toolbar} */
@@ -373,9 +370,6 @@ const PDFViewerApplication = {
     });
     this.findController = findController;
 
-    const noteStore = new NoteStore();
-    self.noteStore = noteStore;
-
     const container = appConfig.mainContainer;
     const viewer = appConfig.viewerContainer;
     this.pdfViewer = new PDFViewer({
@@ -385,7 +379,6 @@ const PDFViewerApplication = {
       renderingQueue: pdfRenderingQueue,
       linkService: pdfLinkService,
       downloadManager,
-      noteStore,
       findController,
       renderer: AppOptions.get("renderer"),
       enableWebGL: AppOptions.get("enableWebGL"),
@@ -414,7 +407,11 @@ const PDFViewerApplication = {
     });
     pdfLinkService.setHistory(this.pdfHistory);
 
-    this.addNoteTool = new AddNoteTool({ container, eventBus });
+    this.addNoteTool = new AddNoteTool({
+      container,
+      eventBus,
+      pdfViewer: this.pdfViewer,
+    });
 
     if (!this.supportsIntegratedFind) {
       this.findBar = new PDFFindBar(appConfig.findBar, eventBus, this.l10n);
@@ -1030,7 +1027,9 @@ const PDFViewerApplication = {
       this.downloadComplete = true;
       this.loadingBar.hide();
 
-      firstPagePromise.then(() => {
+      // pdfDocument.getPage(1) is cached, so it'll be the same as
+      // firstPagePromise below.
+      pdfDocument.getPage(1).then(() => {
         this.eventBus.dispatch("documentloaded", { source: this });
       });
     });
@@ -1064,7 +1063,7 @@ const PDFViewerApplication = {
     this.pdfDocumentProperties.setDocument(pdfDocument, this.url);
 
     const pdfViewer = this.pdfViewer;
-    pdfViewer.setDocument(pdfDocument);
+    pdfViewer.setDocument(pdfDocument, this.url);
     const { firstPagePromise, onePageRendered, pagesPromise } = pdfViewer;
 
     const pdfThumbnailViewer = this.pdfThumbnailViewer;
@@ -1650,6 +1649,7 @@ const PDFViewerApplication = {
     eventBus._on("documentproperties", webViewerDocumentProperties);
     eventBus._on("find", webViewerFind);
     eventBus._on("findfromurlhash", webViewerFindFromUrlHash);
+    eventBus._on("noteschanged", webViewerNotesChanged);
     eventBus._on("updatefindmatchescount", webViewerUpdateFindMatchesCount);
     eventBus._on("updatefindcontrolstate", webViewerUpdateFindControlState);
     if (typeof PDFJSDev === "undefined" || PDFJSDev.test("GENERIC")) {
@@ -2331,6 +2331,10 @@ function webViewerScaleChanging(evt) {
   PDFViewerApplication.toolbar.setPageScale(evt.presetValue, evt.scale);
 
   PDFViewerApplication.pdfViewer.update();
+}
+
+function webViewerNotesChanged(e) {
+  PDFViewerApplication.pdfViewer.updateNotes();
 }
 
 function webViewerRotationChanging(evt) {

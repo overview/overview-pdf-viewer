@@ -67,6 +67,12 @@ class PDFViewer extends BaseViewer {
     }
     this._setCurrentPageNumber(currentId);
   }
+
+  updateNotes() {
+    for (const pageView of this._pages) {
+      pageView.updateNotes();
+    }
+  }
 }
 
 export { PDFViewer };

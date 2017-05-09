@@ -746,6 +746,12 @@ class PDFPageView {
     };
   }
 
+  updateNotes() {
+    if (this.noteLayer) {
+      this.noteLayer.render(this.viewport);
+    }
+  }
+
   /**
    * @param {string|null} label
    */

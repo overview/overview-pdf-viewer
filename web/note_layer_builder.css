@@ -15,6 +15,7 @@
 .noteLayer {
   position: absolute;
   top: 0;
+  left: 0;
   width: 0;
   height: 0;
 }
@@ -28,6 +29,8 @@
 
 .noteLayer .addingNote {
   position: absolute;
+  top: 0;
+  left: 0;
   border: 2px solid yellow;
   background: rgba(255, 255, 0, .2);
   pointer-events: none;

@@ -17,6 +17,7 @@
  * @typedef {Object} AddNoteToolOptions
  * @property {HTMLDivElement} container - The document container.
  * @property {EventBus} eventBus - The application event bus.
+ * @property {PDFViewer} pdfViewer - The PDF Viewer.
  */
 
 class AddNoteTool {
@@ -24,9 +25,10 @@ class AddNoteTool {
    * @constructs AddNoteTool
    * @param {AddNoteOptions} options
    */
-  constructor({ container, eventBus }) {
+  constructor({ container, eventBus, pdfViewer }) {
     this.container = container;
     this.eventBus = eventBus;
+    this.pdfViewer = pdfViewer;
     this.active = false;
 
     // Events to destroy when deactivating
@@ -113,44 +115,25 @@ class AddNoteTool {
     this._stopListening();
 
     function getCurrentRect(ev) {
-      let x0 = point0.x0;
-      let y0 = point0.y0;
+      // Clamp x0, y0 and x1, y1 to the page
+      const x0 = Math.max(point0.x0, 0);
+      const y0 = Math.max(point0.y0, 0);
 
-      let x1 = ev.clientX - point0.layerRect.left;
-      let y1 = ev.clientY - point0.layerRect.top;
+      const x1 = Math.min(
+        point0.layerRect.width,
+        ev.clientX - point0.layerRect.left
+      );
+      const y1 = Math.min(
+        point0.layerRect.height,
+        ev.clientY - point0.layerRect.top
+      );
 
-      // Clamp x1 and y1 onto the page.
-      if (x1 < 0) {
-        x1 = 0;
-      }
-      if (x1 > point0.layerRect.right) {
-        x1 = point0.layerRect.right;
-      }
-      if (y1 < 0) {
-        y1 = 0;
-      }
-      if (y1 > point0.layerRect.bottom) {
-        y1 = point0.layerRect.bottom;
-      }
-
-      // Swap if needed so x0,y0 is top-left
-      if (x0 > x1) {
-        const tx = x1;
-        x1 = x0;
-        x0 = tx;
-      }
-
-      if (y0 > y1) {
-        const ty = y1;
-        y1 = y0;
-        y0 = ty;
-      }
-
+      // Swap x0<=>x1, y0<=>y1 to ensure x0 < x1, y0 < y1
       return {
-        x: x0,
-        y: y0,
-        width: x1 - x0,
-        height: y1 - y0,
+        x: Math.min(x0, x1),
+        y: Math.min(y0, y1),
+        width: Math.abs(x1 - x0),
+        height: Math.abs(y1 - y0),
       };
     }
 
@@ -195,10 +178,25 @@ class AddNoteTool {
   }
 
   /**
-   * Notifies that we want a Note added.
+   * Finishes adding the Note by calling NoteStore.add().
    */
-  _addNote(pageIndex, rect) {
-    console.log("add-note!", pageIndex, rect);
+  _addNote(pageIndex, rectInPx) {
+    const pageView = this.pdfViewer.getPageView(pageIndex);
+
+    const p0 = pageView.viewport.convertToPdfPoint(rectInPx.x, rectInPx.y);
+    const p1 = pageView.viewport.convertToPdfPoint(
+      rectInPx.x + rectInPx.width,
+      rectInPx.y + rectInPx.height
+    );
+
+    pageView.noteLayerFactory.noteStore.add({
+      pageIndex,
+      x: Math.min(p0[0], p1[0]),
+      y: Math.min(p0[1], p1[1]),
+      width: Math.abs(p1[0] - p0[0]),
+      height: Math.abs(p1[1] - p0[1]),
+      text: "",
+    });
   }
 
   deactivate() {

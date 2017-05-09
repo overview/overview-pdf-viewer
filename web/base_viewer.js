@@ -40,7 +40,8 @@ import {
 import { PDFRenderingQueue, RenderingStates } from "./pdf_rendering_queue.js";
 import { AnnotationLayerBuilder } from "./annotation_layer_builder.js";
 import { createPromiseCapability } from "pdfjs-lib";
-import { NoteLayerBuilder } from "./note_layer_builder.js";
+import { NoteLayerFactory } from "./note_layer_builder.js";
+import { NoteStore } from "./note_store.js";
 import { PDFPageView } from "./pdf_page_view.js";
 import { SimpleLinkService } from "./pdf_link_service.js";
 import { TextLayerBuilder } from "./text_layer_builder.js";
@@ -55,7 +56,6 @@ const DEFAULT_CACHE_SIZE = 10;
  * @property {IPDFLinkService} linkService - The navigation/linking service.
  * @property {DownloadManager} [downloadManager] - The download manager
  *   component.
- * @property {NoteStore} [noteStore] - The NoteStore.
  * @property {PDFFindController} [findController] - The find controller
  *   component.
  * @property {PDFRenderingQueue} [renderingQueue] - The rendering queue object.
@@ -151,7 +151,6 @@ class BaseViewer {
     this.linkService = options.linkService || new SimpleLinkService();
     this.downloadManager = options.downloadManager || null;
     this.findController = options.findController || null;
-    this.noteStore = options.noteStore || null;
     this.removePageBorders = options.removePageBorders || false;
     this.textLayerMode = Number.isInteger(options.textLayerMode)
       ? options.textLayerMode
@@ -402,7 +401,7 @@ class BaseViewer {
   /**
    * @param pdfDocument {PDFDocument}
    */
-  setDocument(pdfDocument) {
+  setDocument(pdfDocument, url) {
     if (this.pdfDocument) {
       this._cancelRendering();
       this._resetView();
@@ -418,6 +417,14 @@ class BaseViewer {
     }
     const pagesCount = pdfDocument.numPages;
     const firstPagePromise = pdfDocument.getPage(1);
+
+    console.log(pdfDocument);
+    const noteStore = url
+      ? new NoteStore({
+          eventBus: this.eventBus,
+          url: new URL(url, window.location).href.replace(/\.pdf$/, "/notes"),
+        })
+      : null;
 
     this._pagesCapability.promise.then(() => {
       this.eventBus.dispatch("pagesloaded", {
@@ -470,7 +477,7 @@ class BaseViewer {
             textLayerFactory,
             textLayerMode: this.textLayerMode,
             annotationLayerFactory: this,
-            noteLayerFactory: this,
+            noteLayerFactory: new NoteLayerFactory(noteStore),
             imageResourcesPath: this.imageResourcesPath,
             renderInteractiveForms: this.renderInteractiveForms,
             renderer: this.renderer,
@@ -1153,19 +1160,6 @@ class BaseViewer {
       linkService: this.linkService,
       downloadManager: this.downloadManager,
       l10n,
-    });
-  }
-
-  /**
-   * @param {HTMLDivElement} pageDiv
-   * @param {PDFPage} pdfPage
-   * @returns {NoteLayerBuilder}
-   */
-  createNoteLayerBuilder(pageDiv, pdfPage) {
-    return new NoteLayerBuilder({
-      pageDiv,
-      pdfPage,
-      noteStore: this.noteStore,
     });
   }
 

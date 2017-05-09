@@ -13,11 +13,12 @@
  * limitations under the License.
  */
 
+import { Util } from "../shared/util.js";
+
 /**
  * @typedef {Object} NoteElementParameters
  * @property {Object} data
  * @property {HTMLDivElement} layer
- * @property {PDFPage} page
  * @property {PageViewport} viewport
  */
 
@@ -35,7 +36,6 @@ class NoteElement {
   constructor(parameters) {
     this.data = parameters.data;
     this.layer = parameters.layer;
-    this.page = parameters.page;
     this.viewport = parameters.viewport;
 
     this.container = this._createContainer();
@@ -52,14 +52,20 @@ class NoteElement {
     const data = this.data,
       viewport = this.viewport;
     const container = document.createElement("section");
-    container.setAttribute("data-note-id", data.id);
 
-    container.style.transform = `matrix(${viewport.transform.join(",")})`;
-    container.style.transformOrigin = `-${data.x}px -${data.y}px`;
-    container.style.left = `${data.x}px`;
-    container.style.top = `${data.y}px`;
-    container.style.width = `${data.width}px`;
-    container.style.height = `${data.height}px`;
+    const rect = Util.normalizeRect(
+      viewport.convertToViewportRectangle([
+        data.x,
+        data.y,
+        data.x + data.width,
+        data.y + data.height,
+      ])
+    );
+
+    container.style.left = `${rect[0]}px`;
+    container.style.top = `${rect[1]}px`;
+    container.style.width = `${rect[2] - rect[0]}px`;
+    container.style.height = `${rect[3] - rect[1]}px`;
 
     return container;
   }
@@ -70,7 +76,6 @@ class NoteElement {
  * @property {PageViewport} viewport
  * @property {HTMLDivElement} div
  * @property {Array} notes
- * @property {PFDPage} page
  */
 
 class NoteLayer {
@@ -90,32 +95,10 @@ class NoteLayer {
       const element = NoteElementFactory.create({
         data,
         layer: parameters.div,
-        page: parameters.page,
         viewport: parameters.viewport,
       });
       parameters.div.appendChild(element.container);
     }
-  }
-
-  /**
-   * Update the notes on an existing note layer.
-   *
-   * @public
-   * @param {NoteLayerParameters} parameters
-   * @memberof NoteLayer
-   */
-  static update(parameters) {
-    for (const data of parameters.notes) {
-      const element = parameters.div.querySelector(
-        `[data-note-id="${data.id}"]`
-      );
-      if (element) {
-        element.style.transform = `matrix(${parameters.viewport.transform.join(
-          ","
-        )})`;
-      }
-    }
-    parameters.div.removeAttribute("hidden");
   }
 }
 
