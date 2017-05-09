@@ -14,6 +14,7 @@
  */
 
 import { Util } from "../src/shared/util.js";
+import { scrollIntoView } from './ui_utils';
 
 const EditNoteTreeSpec = [
   {
@@ -234,6 +235,11 @@ class EditNoteTool {
     div.querySelector("textarea").value = currentNote.text;
 
     this._updateDomPositions();
+
+    scrollIntoView(this.div.querySelector(".editNotePopup"), {
+      top: -80, // so the edit-note toolbar appears, which is negative-offset
+      left: 0,
+    });
   }
 
   _updateDomPositions() {
