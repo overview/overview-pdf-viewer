@@ -23,7 +23,7 @@
 class AddNoteTool {
   /**
    * @constructs AddNoteTool
-   * @param {AddNoteOptions} options
+   * @param {AddNoteToolOptions} options
    */
   constructor({ container, eventBus, pdfViewer }) {
     this.container = container;

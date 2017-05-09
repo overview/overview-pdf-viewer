@@ -827,6 +827,14 @@ html[dir='rtl'] .toolbarButton.pageDown::before {
   content: url(images/toolbarButton-addNote@2x.png);
 }
 
+.toolbarButton.nextNote::before {
+  content: url(images/toolbarButton-nextNote@2x.png);
+}
+
+.toolbarButton.previousNote::before {
+  content: url(images/toolbarButton-previousNote@2x.png);
+}
+
 .toolbarButton.presentationMode::before,
 .secondaryToolbarButton.presentationMode::before {
   content: url(images/toolbarButton-presentationMode.png);

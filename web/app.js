@@ -57,6 +57,7 @@ import { CursorTool, PDFCursorTools } from "./pdf_cursor_tools.js";
 import { PDFRenderingQueue, RenderingStates } from "./pdf_rendering_queue.js";
 import { PDFSidebar, SidebarView } from "./pdf_sidebar.js";
 import { AddNoteTool } from "./add_note_tool.js";
+import { EditNoteTool } from "./edit_note_tool.js";
 import { OverlayManager } from "./overlay_manager.js";
 import { PasswordPrompt } from "./password_prompt.js";
 import { PDFAttachmentViewer } from "./pdf_attachment_viewer.js";
@@ -408,6 +409,12 @@ const PDFViewerApplication = {
     pdfLinkService.setHistory(this.pdfHistory);
 
     this.addNoteTool = new AddNoteTool({
+      container,
+      eventBus,
+      pdfViewer: this.pdfViewer,
+    });
+
+    this.editNoteTool = new EditNoteTool({
       container,
       eventBus,
       pdfViewer: this.pdfViewer,

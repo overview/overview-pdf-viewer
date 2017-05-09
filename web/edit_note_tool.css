@@ -1,0 +1,128 @@
+.editNoteTool {
+  /* it's just an empty div. */
+}
+
+.editNoteBackground {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 0; /* it's hard to get "100%" to work, and not worth the effort */
+}
+
+.editNoteBackground>* {
+  position: absolute;
+  background: rgba(0, 0, 0, 0.2);
+}
+
+.editNoteBackground .bgAbove {
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 0; /* JS will set this */
+}
+
+.editNoteBackground .bgBelow {
+  left: 0;
+  width: 100%;
+  top: 0;    /* JS will set this */
+  bottom: 0;
+}
+
+.editNoteBackground .bgLeft {
+  left: 0;
+  top: 0;    /* JS will set this */
+  height: 0; /* JS will set this */
+  width: 0;  /* JS will set this */
+  background: rgba(0, 0, 0, 0.05);
+}
+
+.editNoteBackground .bgRight {
+  right: 0;
+  top: 0;    /* JS will set this. */
+  height: 0; /* JS will set this. */
+  left: 0;   /* JS will set this. */
+  background: rgba(0, 0, 0, 0.05);
+}
+
+.editNotePopup {
+  position: absolute;
+  top: 0;    /* JS will set this. */
+  left: 0;   /* JS will set this. */
+  width: 0;  /* JS will set this. */
+  height: 0; /* JS will set this. */
+  /* transparent background, so .highlight shines through */
+}
+
+.editNoteToolbar {
+  position: absolute;
+  left: -1rem;
+  right: -1rem;
+  bottom: 100%;
+  border: 1px solid gray;
+  border-bottom: none;
+  background: white;
+  padding: 1rem;
+  display: flex;
+}
+
+.editNoteToolbar h4 {
+  display: inline-block;
+}
+
+.editNoteToolbar .space {
+  flex: 1 1 auto;
+}
+
+.editNoteTool .editNoteHighlight {
+  position: absolute;
+  top: 0;
+  left: -1rem;
+  right: -1rem;
+  height: 100%;
+  border-left: 1px solid gray;
+  border-right: 1px solid gray;
+}
+
+.editNoteTool .editNoteHighlight::before {
+  content: '';
+  display: block;
+  position: absolute;
+  top: 0;
+  height: 100%;
+  left: 0;
+  right: 0;
+  border-left: 1rem solid white;
+  border-right: 1rem solid white;
+  box-shadow: inset 0 0 5px gray;
+}
+
+.editNoteTool form {
+  position: absolute;
+  top: 100%;
+  left: -1rem;
+  right: -1rem;
+  border: 1px solid gray;
+  border-top: none;
+  background: white;
+  margin: 0;
+  padding: 1rem;
+}
+
+.editNoteTool form>div {
+  display: flex;
+}
+
+.editNoteTool textarea {
+  display: block;
+  min-height: 5rem;
+  font: inherit;
+  border: none;
+  padding: 1rem;
+  margin: 0 1rem 0 0;
+  flex: 1 1 auto;
+}
+
+.editNoteTool form button {
+  align-self: flex-end;
+}

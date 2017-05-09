@@ -15,6 +15,7 @@
 @import url(text_layer_builder.css);
 @import url(annotation_layer_builder.css);
 @import url(note_layer_builder.css);
+@import url(edit_note_tool.css);
 
 .pdfViewer .canvasWrapper {
   overflow: hidden;

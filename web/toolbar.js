@@ -51,6 +51,8 @@ const SCALE_SELECT_WIDTH = 162; // px
  * @property {HTMLAElement} viewBookmark - Element to link current url of
  *   the page view.
  * @property {HTMLButtonElement} addNote - Button to begin adding note.
+ * @property {HTMLButtonElement} nextNote - Button to edit next note.
+ * @property {HTMLButtonElement} previousNote - Button to edit previous note.
  */
 
 class Toolbar {
@@ -77,6 +79,8 @@ class Toolbar {
       { element: options.download, eventName: "download" },
       { element: options.viewBookmark, eventName: null },
       { element: options.addNote, eventName: "toggleaddingnote" },
+      { element: options.nextNote, eventName: "movetonextnote" },
+      { element: options.previousNote, eventName: "movetopreviousnote" },
     ];
     this.items = {
       numPages: options.numPages,
@@ -89,6 +93,8 @@ class Toolbar {
       zoomIn: options.zoomIn,
       zoomOut: options.zoomOut,
       addNote: options.addNote,
+      nextNote: options.nextNote,
+      previousNote: options.previousNote,
     };
 
     this._wasLocalized = false;

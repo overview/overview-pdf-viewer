@@ -79,6 +79,8 @@ function getViewerConfiguration() {
       download: document.getElementById("download"),
       viewBookmark: document.getElementById("viewBookmark"),
       addNote: document.getElementById("addNote"),
+      previousNote: document.getElementById("previousNote"),
+      nextNote: document.getElementById("nextNote"),
     },
     secondaryToolbar: {
       toolbar: document.getElementById("secondaryToolbar"),

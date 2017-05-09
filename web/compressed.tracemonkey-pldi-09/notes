@@ -6,5 +6,13 @@
     "width": 200,
     "height": 100,
     "text": "Hi there"
+  },
+  {
+    "pageIndex": 4,
+    "x": 144,
+    "y": 400,
+    "width": 300,
+    "height": 100,
+    "text": "Hello again"
   }
 ]

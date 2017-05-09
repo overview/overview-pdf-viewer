@@ -418,7 +418,6 @@ class BaseViewer {
     const pagesCount = pdfDocument.numPages;
     const firstPagePromise = pdfDocument.getPage(1);
 
-    console.log(pdfDocument);
     const noteStore = url
       ? new NoteStore({
           eventBus: this.eventBus,

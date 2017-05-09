@@ -21,14 +21,7 @@ const SAVE_TIMEOUT = 30000; // ms
  * saving on the server.
  */
 function encode(data) {
-  const ret = [];
-  data.forEach((arr, pageIndex) => {
-    for (const note of arr) {
-      ret.push(Object.assign({ pageIndex }, note));
-    }
-  });
-
-  return JSON.stringify(ret);
+  return JSON.stringify(data.flat());
 }
 
 /**
@@ -71,6 +64,7 @@ function decode(s) {
     }
 
     ret[note.pageIndex].push({
+      pageIndex: note.pageIndex,
       x: note.x,
       y: note.y,
       width: note.width,
@@ -80,6 +74,16 @@ function decode(s) {
   }
 
   return ret;
+}
+
+function compareNotes(a, b) {
+  return (
+    b.y - a.y ||
+    a.x - b.x ||
+    a.height - b.height ||
+    a.width - b.width ||
+    a.text.localeCompare(b.text)
+  );
 }
 
 /**
@@ -241,6 +245,7 @@ class NoteStore {
       }
 
       this._data[note.pageIndex].push({
+        pageIndex: note.pageIndex,
         x: note.x,
         y: note.y,
         width: note.width,
@@ -250,20 +255,85 @@ class NoteStore {
 
       // Keep list sorted.
       // [adam] Obviously .splice() would be better, but I'm lazy.
-      this._data[note.pageIndex].sort(function(a, b) {
-        return (
-          a.y - b.y ||
-          a.x - b.x ||
-          a.height - b.height ||
-          a.width - b.width ||
-          a.text.localeCompare(b.text)
-        );
-      });
+      this._data[note.pageIndex].sort(compareNotes);
 
       this.eventBus.dispatch("noteschanged");
       this._isChangedSinceLastSave = true;
       return this._save();
     });
+  }
+
+  /**
+   * Returns the "next" Note relative to the given one.
+   *
+   * If given `null`, returns the first Note.
+   */
+  getNextNote(note) {
+    // Search for `note` from the current page until the end. Return the note
+    // after the note we found.
+    const ii = this._data.length;
+    let seenNote = false;
+    for (let i = note ? note.pageIndex : 0; i < ii; i++) {
+      const page = this._data[i];
+      for (let j = 0, jj = page.length; j < jj; j++) {
+        if (seenNote || note === null) {
+          return page[j];
+        } else if (page[j] === note) {
+          seenNote = true;
+        }
+      }
+    }
+
+    if (note === null) {
+      return null; // There aren't any Notes.
+    }
+
+    // If we still haven't returned, then we've passed the end of the
+    // document. Return the first Note.
+    for (let i = 0; i < ii; i++) {
+      const page = this._data[i];
+      if (page.length > 0) {
+        return page[0];
+      }
+    }
+
+    throw new Error("This function has a bug");
+  }
+
+  /**
+   * Returns the "previous" Note relative to the given one.
+   *
+   * If given `null`, returns the last Note.
+   */
+  getPreviousNote(note) {
+    // Search for `note` from the current page until the beginning. Return the
+    // note before the note we found.
+    let seenNote = false;
+    for (let i = note ? note.pageIndex : this._data.length - 1; i >= 0; i--) {
+      const page = this._data[i];
+      for (let j = page.length - 1; j >= 0; j--) {
+        if (seenNote || note === null) {
+          return page[j];
+        } else if (page[j] === note) {
+          seenNote = true;
+        }
+      }
+    }
+
+    if (note === null) {
+      return null; // There aren't any Notes.
+    }
+
+    // If we still haven't returned, then we've passed the end of the
+    // document. Return the last Note.
+    for (let i = this._data.length - 1; i >= 0; i--) {
+      const page = this._data[i];
+      if (page.length > 0) {
+        return page[page.length - 1];
+      }
+    }
+
+    throw new Error("This function has a bug");
   }
 }
 
