@@ -127,7 +127,21 @@ var EditNoteTool = (function EditNoteToolClosure() {
     },
 
     deleteNote: function() {
-      console.log('TODO deleteNote()');
+      var noteStore = this.pdfViewer.noteStore; // assume it's set
+
+      var controls = this.div.querySelector('button, textarea, form');
+      for (var i = 0, ii = controls.length; i < ii; i++) {
+        controls[i].setAttribute('disabled', true);
+      }
+
+      var button = this.div.querySelector('button.editNoteDelete');
+      button.classList.add('deleting');
+
+      var self = this;
+      return noteStore.deleteNote(this.currentNote)
+        .then(function() {
+          self.setNote(null);
+        });
     },
 
     saveNote: function() {
@@ -169,7 +183,6 @@ var EditNoteTool = (function EditNoteToolClosure() {
     },
 
     _onClickDelete: function(ev) {
-      console.log('click delete', ev);
       ev.preventDefault();
       ev.stopPropagation();
       this.deleteNote();

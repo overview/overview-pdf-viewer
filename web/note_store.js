@@ -22,7 +22,6 @@ var SAVE_TIMEOUT = 30000; // ms
  */
 function encode(data) {
   var ret = Array.prototype.concat.apply([], data);
-  console.log(ret);
   return JSON.stringify(ret);
 }
 
@@ -365,6 +364,35 @@ var NoteStore = (function NoteStoreClosure() {
         // Keep list sorted.
         // [adam] in-order .splice() would be better. I'm too lazy today.
         self._data[note.pageIndex].sort(compareNotes);
+
+        self.eventBus.dispatch('noteschanged');
+        self._isChangedSinceLastSave = true;
+        return self._save();
+      });
+    },
+
+    /**
+     * Ensures `this.loaded`; deletes Note; begins saving.
+     *
+     * The returned Promise resolves when the save completes.
+     */
+    deleteNote: function NoteStore_deleteNote(note) {
+      var self = this;
+
+      if (!self.loaded) {
+        return Promise.reject(new Error('Programmer error: delete before read'));
+      }
+
+      return self.loaded.then(function() {
+        var arr = self._data[note.pageIndex];
+
+        var index = arr.indexOf(note);
+
+        if (index === -1) {
+          return Promise.resolve(null); // it's already deleted
+        }
+
+        arr.splice(index, 1);
 
         self.eventBus.dispatch('noteschanged');
         self._isChangedSinceLastSave = true;
