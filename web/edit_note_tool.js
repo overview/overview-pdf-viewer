@@ -13,6 +13,7 @@
  * limitations under the License.
  */
 import { Util } from '../src/shared/util';
+import { scrollIntoView } from './ui_utils';
 
 /**
  * @typedef {Object} EditNoteToolOptions
@@ -130,21 +131,18 @@ var EditNoteTool = (function EditNoteToolClosure() {
     },
 
     _onMousedownBackground: function(ev) {
-      console.log('mousedown background', ev);
       ev.preventDefault();
       ev.stopPropagation();
       this.close();
     },
 
     _onClickPrevious: function(ev) {
-      console.log('click previous', ev);
       ev.preventDefault();
       ev.stopPropagation();
       this.eventBus.dispatch('movetopreviousnote');
     },
 
     _onClickNext: function(ev) {
-      console.log('click next', ev);
       ev.preventDefault();
       ev.stopPropagation();
       this.eventBus.dispatch('movetonextnote');
@@ -158,7 +156,6 @@ var EditNoteTool = (function EditNoteToolClosure() {
     },
 
     _onClickClose: function(ev) {
-      console.log('click close', ev);
       ev.preventDefault();
       ev.stopPropagation();
       this.close();
@@ -178,6 +175,11 @@ var EditNoteTool = (function EditNoteToolClosure() {
       div.querySelector('textarea').value = note.text;
 
       this._updateDomPositions();
+
+      scrollIntoView(this.div.querySelector('.editNotePopup'), {
+        top: -80, // so the edit-note toolbar appears, which is negative-offset
+        left: 0,
+      });
     },
 
     _updateDomPositions: function() {
