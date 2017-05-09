@@ -100,6 +100,10 @@ var EditNoteTool = (function EditNoteToolClosure() {
         .addEventListener('click', this._onClickDelete.bind(this));
       this.div.querySelector('button.editNoteClose')
         .addEventListener('click', this._onClickClose.bind(this));
+      this.div.querySelector('textarea')
+        .addEventListener('input', this._onTextInput.bind(this));
+      this.div.querySelector('form')
+        .addEventListener('submit', this._onSubmit.bind(this));
     },
 
     close: function() {
@@ -127,7 +131,23 @@ var EditNoteTool = (function EditNoteToolClosure() {
     },
 
     saveNote: function() {
-      console.log('TODO saveNote()');
+      var noteStore = this.pdfViewer.noteStore; // assume it's set
+
+      var button = this.div.querySelector('form button');
+      button.setAttribute('disabled', true);
+      button.classList.add('saving');
+
+      var textarea = this.div.querySelector('form textarea');
+      var text = textarea.value;
+
+      return noteStore.setNoteText(this.currentNote, text)
+        .then(function() {
+          button.classList.remove('saving');
+        });
+    },
+
+    _onTextInput: function(ev) {
+      ev.target.nextSibling.removeAttribute('disabled');
     },
 
     _onMousedownBackground: function(ev) {
@@ -161,8 +181,7 @@ var EditNoteTool = (function EditNoteToolClosure() {
       this.close();
     },
 
-    _onClickSave: function(ev) {
-      console.log('click save', ev);
+    _onSubmit: function(ev) {
       ev.preventDefault();
       ev.stopPropagation();
       this.saveNote();

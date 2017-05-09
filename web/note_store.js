@@ -371,6 +371,28 @@ var NoteStore = (function NoteStoreClosure() {
         return self._save();
       });
     },
+
+    /**
+     * Ensures `this.loaded`; updates text of the given Note; begins saving.
+     *
+     * The returned Promise resolves when the save completes.
+     */
+    setNoteText: function NoteStore_setNoteText(note, text) {
+      var self = this;
+
+      if (!self.loaded) {
+        return Promise.reject(new Error('Programmer error: set before read'));
+      }
+
+      return self.loaded.then(function() {
+        note.text = text;
+
+        self._data[note.pageIndex].sort(compareNotes); // Wild edge case
+        self.eventBus.dispatch('noteschanged');
+        self._isChangedSinceLastSave = true;
+        return self._save();
+      });
+    },
   };
 
   return NoteStore;
