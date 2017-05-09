@@ -192,7 +192,19 @@ class EditNoteTool {
   }
 
   deleteNote() {
-    console.log("TODO deleteNote()");
+    if (!this.noteStore || !this.currentNote) {
+      return;
+    }
+
+    const controls = this.div.querySelectorAll("button, textarea, form");
+    for (const control of controls) {
+      control.disabled = true;
+    }
+
+    const button = this.div.querySelector("button.editNoteDelete");
+    button.classList.add("deleting");
+
+    this.noteStore.deleteNote(this.currentNote).then(() => this.setNote(null));
   }
 
   saveNote() {

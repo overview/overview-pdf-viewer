@@ -337,6 +337,28 @@ class NoteStore {
   }
 
   /**
+   * Ensures `this.loaded`; deletes Note; begins saving.
+   *
+   * The returned Promise resolves when the save completes.
+   */
+  deleteNote(note) {
+    return this.loaded.then(() => {
+      const arr = this._data[note.pageIndex];
+      const index = arr.indexOf(note);
+
+      if (index === -1) {
+        return Promise.resolve(null); // it's already deleted
+      }
+
+      arr.splice(index, 1);
+
+      this.eventBus.dispatch("noteschanged");
+      this._isChangedSinceLastSave = true;
+      return this._save();
+    });
+  }
+
+  /**
    * Ensures `this.loaded`; updates text of the given Note; begins saving.
    *
    * The returned Promise resolves when the save completes.
