@@ -40,29 +40,23 @@ class NoteLayerBuilder {
       return;
     }
 
-    this.noteStore.getNotesForPage(this.pdfPage).then((notes) => {
-      var parameters = {
-        viewport: viewport.clone({ dontFlip: true }),
-        div: this.div,
-        notes,
-        page: this.pdfPage,
-      };
+    var parameters = {
+      viewport,
+      div: this.div,
+      notes: this.noteStore.getNotesForPageIndex(this.pdfPage.pageIndex),
+      page: this.pdfPage,
+    };
 
-      if (this.div) {
-        // If a noteLayer already exists, refresh its children's
-        // transformation matrices
-        NoteLayer.update(parameters);
-      } else {
-        // Create a note layer div and render the notes, even if there are
-        // zero notes.
-        this.div = document.createElement('div');
-        this.div.className = 'noteLayer';
-        this.pageDiv.appendChild(this.div);
-        parameters.div = this.div;
+    if (this.div) {
+      this.div.innerHTML = '';
+    } else {
+      this.div = document.createElement('div');
+      this.div.className = 'noteLayer';
+      this.pageDiv.appendChild(this.div);
+    }
 
-        NoteLayer.render(parameters);
-      }
-    });
+    parameters.div = this.div;
+    NoteLayer.render(parameters);
   }
 
   hide() {

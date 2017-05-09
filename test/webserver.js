@@ -37,7 +37,8 @@ var mimeTypes = {
   '.properties': 'text/plain'
 };
 
-var defaultMimeType = 'application/octet-stream';
+//var defaultMimeType = 'application/octet-stream';
+var defaultMimeType = 'application/json';
 
 function WebServer() {
   this.root = '.';

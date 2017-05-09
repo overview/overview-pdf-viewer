@@ -19,7 +19,6 @@ import { CustomStyle } from './pdfjs';
  * @typedef {Object} NoteElementPrameters
  * @property {Object} data
  * @property {HTMLDivElement} layer
- * @property {PDFPage} page
  * @property {PageViewport} viewport
  */
 
@@ -47,7 +46,6 @@ var NoteElement = (function NoteElementClosure() {
   function NoteElement(parameters) {
     this.data = parameters.data;
     this.layer = parameters.layer;
-    this.page = parameters.page;
     this.viewport = parameters.viewport;
 
     this.container = this._createContainer();
@@ -62,25 +60,20 @@ var NoteElement = (function NoteElementClosure() {
      * @returns {HTMLSectionElement}
      */
     _createContainer: function NoteElement_createContainer() {
-      var data = this.data, page = this.page, viewport = this.viewport;
+      var data = this.data, viewport = this.viewport;
       var container = document.createElement('section');
-      container.setAttribute('data-note-id', data.id);
 
-      // Copied from annotation_layer.js; I don't quite understand it
-      var rect = Util.normalizeRect([
+      var rect = Util.normalizeRect(viewport.convertToViewportRectangle([
         data.x,
         data.y,
         data.x + data.width,
-        data.y + data.height
-      ]);
-      CustomStyle.setProp('transform', container,
-                          'matrix(' + viewport.transform.join(',') + ')');
-      CustomStyle.setProp('transformOrigin', container,
-                          -rect[0] + 'px ' + -rect[1] + 'px');
+        data.y + data.height,
+      ]));
+
       container.style.left = rect[0] + 'px';
       container.style.top = rect[1] + 'px';
-      container.style.width = data.width + 'px';
-      container.style.height = data.height + 'px';
+      container.style.width = (rect[2] - rect[0]) + 'px';
+      container.style.height = (rect[3] - rect[1]) + 'px';
 
       return container;
     },
@@ -94,7 +87,6 @@ var NoteElement = (function NoteElementClosure() {
  * @property {PageViewport} viewport
  * @property {HTMLDivElement} div
  * @property {Array} notes
- * @property {PFDPage} page
  */
 
 /**
@@ -122,30 +114,11 @@ var NoteLayer = (function NoteLayerClosure() {
         var element = noteElementFactory.create({
           data,
           layer: parameters.div,
-          page: parameters.page,
           viewport: parameters.viewport,
         });
         parameters.div.appendChild(element.container);
       }
-    },
 
-    /**
-     * Update the notes on an existing note layer.
-     *
-     * @public
-     * @param {NoteLayerParameters} parameters
-     * @memberof NoteLayer
-     */
-    update: function NoteLayer_update(parameters) {
-      for (var i = 0, ii = parameters.notes.length; i < ii; i++) {
-        var data = parameters.notes[i];
-        var element = parameters.div.querySelector(
-          '[data-note-id="' + data.id + '"]');
-        if (element) {
-          CustomStyle.setProp('transform', element,
-            'matrix(' + parameters.viewport.transform.join(',') + ')');
-        }
-      }
       parameters.div.removeAttribute('hidden');
     },
   };

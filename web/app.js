@@ -259,7 +259,7 @@ var PDFViewerApplication = {
       var downloadManager = self.externalServices.createDownloadManager();
       self.downloadManager = downloadManager;
 
-      var noteStore = new NoteStore();
+      var noteStore = new NoteStore({ eventBus, });
       self.noteStore = noteStore;
 
       var container = appConfig.mainContainer;
@@ -331,6 +331,7 @@ var PDFViewerApplication = {
       self.addNoteTool = new AddNoteTool({
         container,
         eventBus,
+        pdfViewer: self.pdfViewer,
       });
 
       self.pdfDocumentProperties =
@@ -784,6 +785,10 @@ var PDFViewerApplication = {
     var pdfThumbnailViewer = this.pdfThumbnailViewer;
     pdfThumbnailViewer.setDocument(pdfDocument);
 
+    if (this.noteStore) {
+      this.noteStore.setDocumentUrl(this.url);
+    }
+
     firstPagePromise.then((pdfPage) => {
       downloadedPromise.then(function () {
         self.eventBus.dispatch('documentload', {source: self});
@@ -1051,6 +1056,7 @@ var PDFViewerApplication = {
     eventBus.on('documentproperties', webViewerDocumentProperties);
     eventBus.on('find', webViewerFind);
     eventBus.on('findfromurlhash', webViewerFindFromUrlHash);
+    eventBus.on('noteschanged', webViewerNotesChanged);
     if (typeof PDFJSDev === 'undefined' || PDFJSDev.test('GENERIC')) {
       eventBus.on('fileinputchange', webViewerFileInputChange);
     }
@@ -1422,6 +1428,10 @@ function webViewerFindFromUrlHash(e) {
     highlightAll: true,
     findPrevious: false
   });
+}
+
+function webViewerNotesChanged(e) {
+  PDFViewerApplication.pdfViewer.updateNotes();
 }
 
 function webViewerScaleChanging(e) {

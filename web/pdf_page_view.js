@@ -668,6 +668,12 @@ var PDFPageView = (function PDFPageViewClosure() {
       };
     },
 
+    updateNotes: function PDFView_refreshNotes() {
+      if (this.noteLayer) {
+        this.noteLayer.render(this.viewport);
+      }
+    },
+
     /**
      * @param {string|null} label
      */

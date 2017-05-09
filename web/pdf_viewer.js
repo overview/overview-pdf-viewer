@@ -296,6 +296,13 @@ var PDFViewer = (function pdfViewer() {
       }
     },
 
+    updateNotes() {
+      for (var i = 0, ii = this._pages.length; i < ii; i++) {
+        var pageView = this._pages[i];
+        pageView.updateNotes();
+      }
+    },
+
     /**
      * @param pdfDocument {PDFDocument}
      */

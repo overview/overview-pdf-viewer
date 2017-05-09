@@ -17,6 +17,7 @@
  * @typedef {Object} AddNoteToolOptions
  * @property {HTMLDivElement} container - The document container.
  * @property {EventBus} eventBus - The application event bus.
+ * @property {PDFViewer} pdfViewer - The PDF Viewer.
  */
 
 /**
@@ -30,6 +31,7 @@ var AddNoteTool = (function AddNoteToolClosure() {
   function AddNoteTool(options) {
     this.container = options.container;
     this.eventBus = options.eventBus;
+    this.pdfViewer = options.pdfViewer;
     this.active = false;
 
     // Events to destroy when deactivating
@@ -124,28 +126,15 @@ var AddNoteTool = (function AddNoteToolClosure() {
 
         // Clamp x1 and y1 onto the page.
         if (x1 < 0) x1 = 0;
-        if (x1 > point0.layerRect.right) x1 = point0.layerRect.right;
+        if (x1 > point0.layerRect.width) x1 = point0.layerRect.width;
         if (y1 < 0) y1 = 0;
-        if (y1 > point0.layerRect.bottom) y1 = point0.layerRect.bottom;
-
-        // Swap if needed so x0,y0 is top-left
-        if (x0 > x1) {
-          var tx = x1;
-          x1 = x0;
-          x0 = tx;
-        }
-
-        if (y0 > y1) {
-          var ty = y1;
-          y1 = y0;
-          y0 = ty;
-        }
+        if (y1 > point0.layerRect.height) y1 = point0.layerRect.height;
 
         return {
-          x: x0,
-          y: y0,
-          width: x1 - x0,
-          height: y1 - y0,
+          x: Math.min(x0, x1),
+          y: Math.min(y0, y1),
+          width: Math.abs(x1 - x0),
+          height: Math.abs(y1 - y0),
         };
       }
 
@@ -192,10 +181,28 @@ var AddNoteTool = (function AddNoteToolClosure() {
     },
 
     /**
-     * Notifies that we want a Note added.
+     * Finishes adding the Note by calling NoteStore.add().
      */
-    _addNote: function AddNoteTool_addNote(pageIndex, rect) {
-      console.log('add-note!', pageIndex, rect);
+    _addNote: function AddNoteTool_addNote(pageIndex, rectInPx) {
+      var pageView = this.pdfViewer.getPageView(pageIndex);
+
+      var p0 = pageView.viewport.convertToPdfPoint(
+        rectInPx.x,
+        rectInPx.y
+      );
+      var p1 = pageView.viewport.convertToPdfPoint(
+        rectInPx.x + rectInPx.width,
+        rectInPx.y + rectInPx.height
+      );
+
+      this.pdfViewer.noteStore.add({
+        pageIndex: pageIndex,
+        x: Math.min(p0[0], p1[0]),
+        y: Math.min(p0[1], p1[1]),
+        width: Math.abs(p1[0] - p0[0]),
+        height: Math.abs(p1[1] - p0[1]),
+        text: '',
+      })
     },
 
     deactivate: function() {
