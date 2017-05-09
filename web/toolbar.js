@@ -41,6 +41,8 @@ var SCALE_SELECT_PADDING = 22;
  * @property {HTMLButtonElement} presentationModeButton - Button to switch to
  *   presentation mode.
  * @property {HTMLButtonElement} addNote - Button to begin adding note.
+ * @property {HTMLButtonElement} nextNote - Button to edit next note.
+ * @property {HTMLButtonElement} previousNote - Button to edit previous note.
  */
 
 /**
@@ -147,6 +149,14 @@ var Toolbar = (function ToolbarClosure() {
         eventBus.dispatch('toggleaddingnote', {
           source: self,
         });
+      });
+
+      items.nextNote.addEventListener('click', function(e) {
+        eventBus.dispatch('movetonextnote');
+      });
+
+      items.previousNote.addEventListener('click', function(e) {
+        eventBus.dispatch('movetopreviousnote');
       });
 
       // Suppress context menus for some controls

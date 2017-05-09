@@ -668,7 +668,7 @@ var PDFPageView = (function PDFPageViewClosure() {
       };
     },
 
-    updateNotes: function PDFView_refreshNotes() {
+    updateNotes: function PDFView_updateNotes() {
       if (this.noteLayer) {
         this.noteLayer.render(this.viewport);
       }

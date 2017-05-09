@@ -26,7 +26,7 @@
 var AddNoteTool = (function AddNoteToolClosure() {
   /**
    * @constructs AddNoteTool
-   * @param {AddNoteOptions} options
+   * @param {AddNoteToolOptions} options
    */
   function AddNoteTool(options) {
     this.container = options.container;

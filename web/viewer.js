@@ -46,6 +46,8 @@ function getViewerConfiguration() {
       viewFind: document.getElementById('viewFind'),
       presentationModeButton: document.getElementById('presentationMode'),
       addNote: document.getElementById('addNote'),
+      previousNote: document.getElementById('previousNote'),
+      nextNote: document.getElementById('nextNote'),
     },
     secondaryToolbar: {
       toolbar: document.getElementById('secondaryToolbar'),

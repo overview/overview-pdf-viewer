@@ -21,19 +21,8 @@ var SAVE_TIMEOUT = 30000; // ms
  * saving on the server.
  */
 function encode(data) {
-  var len = data.reduce(function(s, a) { return s + a.length; }, 0);
-  var ret = new Array(len);
-
-  var idx = 0;
-  for (var i = 0, ii = data.length; i < ii; i++) {
-    var arr = data[i];
-    for (var j = 0, jj = arr.length; j < jj; j++) {
-      ret[idx++] = Object.assign({
-        pageIndex: i,
-      }, arr[j]);
-    }
-  }
-
+  var ret = Array.prototype.concat.apply([], data);
+  console.log(ret);
   return JSON.stringify(ret);
 }
 
@@ -78,6 +67,7 @@ function decode(s) {
     }
 
     ret[note.pageIndex].push({
+      pageIndex: note.pageIndex,
       x: note.x,
       y: note.y,
       width: note.width,
@@ -87,6 +77,14 @@ function decode(s) {
   }
 
   return ret;
+}
+
+function compareNotes(a, b) {
+  return (b.y - a.y) ||
+         (a.x - b.x) ||
+         (a.height - b.height) ||
+         (a.width - b.width) ||
+         a.text.localeCompare(b.text);
 }
 
 /**
@@ -167,6 +165,82 @@ var NoteStore = (function NoteStoreClosure() {
         xhr.timeout = LOAD_TIMEOUT;
         xhr.send(null);
       });
+    },
+
+    /**
+     * Returns the "next" Note relative to the given one.
+     *
+     * If given `null`, returns the first Note.
+     */
+    getNextNote: function NoteStore_getNextNote(note) {
+      var i, j, ii, jj, page;
+
+      // Search for `note` from the current page until the end. Return the note
+      // after the note we found.
+      for (i = (note ? note.pageIndex : 0), ii = this._data.length; i < ii; i++) {
+        page = this._data[i];
+        var seenNote = false;
+        for (j = 0, jj = page.length; j < jj; j++) {
+          if (seenNote || note === null) {
+            return page[j];
+          } else if (page[j] === note) {
+            seenNote = true;
+          }
+        }
+      }
+
+      if (note === null) {
+        return null; // There aren't any Notes.
+      }
+
+      // If we still haven't returned, then we've passed the end of the
+      // document. Return the first Note.
+      for (i = 0, ii = this._data.length; i < ii; i++) {
+        page = this._data[i];
+        if (page.length > 0) {
+          return page[0];
+        }
+      }
+
+      throw new Error('This function has a bug');
+    },
+
+    /**
+     * Returns the "previous" Note relative to the given one.
+     *
+     * If given `null`, returns the last Note.
+     */
+    getPreviousNote: function NoteStore_getPreviousNote(note) {
+      var i, j, page;
+
+      // Search for `note` from the current page until the beginning. Return the
+      // note before the note we found.
+      for (i = (note ? note.pageIndex : this._data.length - 1); i >= 0; i--) {
+        page = this._data[i];
+        var seenNote = false;
+        for (j = page.length - 1; j >= 0; j--) {
+          if (seenNote || note === null) {
+            return page[j];
+          } else if (page[j] === note) {
+            seenNote = true;
+          }
+        }
+      }
+
+      if (note === null) {
+        return null; // There aren't any Notes.
+      }
+
+      // If we still haven't returned, then we've passed the end of the
+      // document. Return the last Note.
+      for (i = this._data.length - 1; i >= 0; i--) {
+        page = this._data[i];
+        if (page.length > 0) {
+          return page[page.length - 1];
+        }
+      }
+
+      throw new Error('This function has a bug');
     },
 
     /**
@@ -280,6 +354,7 @@ var NoteStore = (function NoteStoreClosure() {
         }
 
         self._data[note.pageIndex].push({
+          pageIndex: note.pageIndex,
           x: note.x,
           y: note.y,
           width: note.width,
@@ -288,14 +363,8 @@ var NoteStore = (function NoteStoreClosure() {
         });
 
         // Keep list sorted.
-        // [adam] Obviously .splice() would be better, but I'm lazy.
-        self._data[note.pageIndex].sort(function(a, b) {
-          return (a.y - b.y) ||
-                 (a.x - b.x) ||
-                 (a.height - b.height) ||
-                 (a.width - b.width) ||
-                 a.text.localeCompare(b.text);
-        });
+        // [adam] in-order .splice() would be better. I'm too lazy today.
+        self._data[note.pageIndex].sort(compareNotes);
 
         self.eventBus.dispatch('noteschanged');
         self._isChangedSinceLastSave = true;

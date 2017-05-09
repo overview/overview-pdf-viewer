@@ -32,6 +32,7 @@ import { PDFViewer, PresentationModeState } from './pdf_viewer';
 import { getGlobalEventBus } from './dom_events';
 import { HandTool } from './hand_tool';
 import { AddNoteTool } from './add_note_tool';
+import { EditNoteTool } from './edit_note_tool';
 import { NoteStore } from './note_store';
 import { OverlayManager } from './overlay_manager';
 import { PasswordPrompt } from './password_prompt';
@@ -329,6 +330,12 @@ var PDFViewerApplication = {
       });
 
       self.addNoteTool = new AddNoteTool({
+        container,
+        eventBus,
+        pdfViewer: self.pdfViewer,
+      });
+
+      self.editNoteTool = new EditNoteTool({
         container,
         eventBus,
         pdfViewer: self.pdfViewer,
