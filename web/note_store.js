@@ -335,6 +335,22 @@ class NoteStore {
 
     throw new Error("This function has a bug");
   }
+
+  /**
+   * Ensures `this.loaded`; updates text of the given Note; begins saving.
+   *
+   * The returned Promise resolves when the save completes.
+   */
+  setNoteText(note, text) {
+    return this.loaded.then(() => {
+      note.text = text;
+
+      this._data[note.pageIndex].sort(compareNotes); // Wild edge case
+      this.eventBus.dispatch("noteschanged");
+      this._isChangedSinceLastSave = true;
+      return this._save();
+    });
+  }
 }
 
 export { NoteStore };

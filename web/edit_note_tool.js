@@ -13,8 +13,8 @@
  * limitations under the License.
  */
 
+import { scrollIntoView } from "./ui_utils.js";
 import { Util } from "../src/shared/util.js";
-import { scrollIntoView } from './ui_utils';
 
 const EditNoteTreeSpec = [
   {
@@ -161,6 +161,12 @@ class EditNoteTool {
     this.div
       .querySelector("button.editNoteClose")
       .addEventListener("click", this._onClickClose.bind(this));
+    this.div
+      .querySelector("textarea")
+      .addEventListener("input", this._onTextInput.bind(this));
+    this.div
+      .querySelector("form")
+      .addEventListener("submit", this._onSubmit.bind(this));
   }
 
   close() {
@@ -190,7 +196,20 @@ class EditNoteTool {
   }
 
   saveNote() {
-    console.log("TODO saveNote()");
+    if (!this.noteStore || !this.currentNote) {
+      return;
+    }
+
+    const button = this.div.querySelector("form button");
+    button.disabled = true;
+    button.classList.add("saving");
+
+    const textarea = this.div.querySelector("form textarea");
+    const text = textarea.value;
+
+    this.noteStore
+      .setNoteText(this.currentNote, text)
+      .then(() => button.classList.remove("saving"));
   }
 
   _onMousedownBackground(ev) {
@@ -223,11 +242,15 @@ class EditNoteTool {
     this.close();
   }
 
-  _onClickSave(ev) {
-    console.log("click save", ev);
+  _onSubmit(ev) {
     ev.preventDefault();
     ev.stopPropagation();
     this.saveNote();
+  }
+
+  _onTextInput(ev) {
+    ev.target.nextSibling.disabled =
+      this.currentNote && ev.target.value === this.currentNote.text;
   }
 
   _updateDom() {
