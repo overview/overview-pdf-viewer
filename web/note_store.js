@@ -177,9 +177,9 @@ var NoteStore = (function NoteStoreClosure() {
 
       // Search for `note` from the current page until the end. Return the note
       // after the note we found.
+      var seenNote = false;
       for (i = (note ? note.pageIndex : 0), ii = this._data.length; i < ii; i++) {
         page = this._data[i];
-        var seenNote = false;
         for (j = 0, jj = page.length; j < jj; j++) {
           if (seenNote || note === null) {
             return page[j];
@@ -215,9 +215,9 @@ var NoteStore = (function NoteStoreClosure() {
 
       // Search for `note` from the current page until the beginning. Return the
       // note before the note we found.
+      var seenNote = false;
       for (i = (note ? note.pageIndex : this._data.length - 1); i >= 0; i--) {
         page = this._data[i];
-        var seenNote = false;
         for (j = page.length - 1; j >= 0; j--) {
           if (seenNote || note === null) {
             return page[j];
