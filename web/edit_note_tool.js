@@ -71,7 +71,7 @@ const EditNoteTreeSpec = [
               {
                 tag: "button",
                 attrs: { class: "editNoteSave", disabled: true },
-                text: "Save",
+                children: [{ tag: "span", text: "Save" }],
               },
             ],
           },
@@ -175,7 +175,7 @@ class EditNoteTool {
       .addEventListener("click", this._onClickClose.bind(this));
     this.div
       .querySelector("textarea")
-      .addEventListener("input", this._onTextInput.bind(this));
+      .addEventListener("input", this._refreshSubmitButtonDisabled.bind(this));
     this.div
       .querySelector("form")
       .addEventListener("submit", this._onSubmit.bind(this));
@@ -203,20 +203,47 @@ class EditNoteTool {
     }
   }
 
+  _setError(err) {
+    console.warn(err);
+
+    this.div.classList.add("error");
+
+    this._setToolbarButtonsDisabled(true);
+    const error = document.createElement("p");
+    error.className = "error";
+    error.textContent =
+      "Save failed. Please reload this document and try again.";
+
+    this._setFormDisabled(true);
+    const form = this.div.querySelector("form");
+    form.appendChild(error);
+  }
+
   deleteNote() {
     if (!this.noteStore || !this.currentNote) {
       return;
     }
 
+    this._setToolbarButtonsDisabled(true);
+    this._setFormDisabled(true);
+    this.div.classList.add("deleting");
+
+    this.noteStore.deleteNote(this.currentNote).then(
+      () => this.setNote(null),
+      err => this._setError(err)
+    );
+  }
+
+  _setToolbarButtonsDisabled(disabled) {
     const controls = this.div.querySelectorAll("button, textarea, form");
     for (const control of controls) {
-      control.disabled = true;
+      control.disabled = disabled;
     }
+  }
 
-    const button = this.div.querySelector("button.editNoteDelete");
-    button.classList.add("deleting");
-
-    this.noteStore.deleteNote(this.currentNote).then(() => this.setNote(null));
+  _setFormDisabled(disabled) {
+    this.div.querySelector("textarea").disabled = disabled;
+    this.div.querySelector("form button").disabled = disabled;
   }
 
   saveNote() {
@@ -224,16 +251,25 @@ class EditNoteTool {
       return;
     }
 
-    const button = this.div.querySelector("form button");
-    button.disabled = true;
-    button.classList.add("saving");
+    this.div.classList.add("saving");
+    this._setToolbarButtonsDisabled(true);
+    this._setFormDisabled(true);
 
     const textarea = this.div.querySelector("form textarea");
     const text = textarea.value;
 
-    this.noteStore
-      .setNoteText(this.currentNote, text)
-      .then(() => button.classList.remove("saving"));
+    this.noteStore.setNoteText(this.currentNote, text).then(
+      () => {
+        this.div.classList.remove("saving");
+        this._setToolbarButtonsDisabled(false);
+        this._setFormDisabled(false);
+        this._refreshSubmitButtonDisabled();
+      },
+      err => {
+        this.div.classList.remove("saving");
+        this._setError(err);
+      }
+    );
   }
 
   _onMousedownBackground(ev) {
@@ -272,9 +308,11 @@ class EditNoteTool {
     this.saveNote();
   }
 
-  _onTextInput(ev) {
-    ev.target.nextSibling.disabled =
-      this.currentNote && ev.target.value === this.currentNote.text;
+  _refreshSubmitButtonDisabled() {
+    const textarea = this.div.querySelector("textarea");
+    const button = this.div.querySelector("form button");
+    button.disabled =
+      this.currentNote && textarea.value === this.currentNote.text;
   }
 
   _updateDom() {

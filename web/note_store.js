@@ -198,7 +198,14 @@ class NoteStore {
 
       const xhr = new XMLHttpRequest();
       xhr.onload = function() {
-        end(resolve);
+        if (Math.floor(xhr.status / 100) !== 2) {
+          end(
+            reject,
+            new Error(`Save failed: ${xhr.status} ${xhr.statusText}`)
+          );
+        } else {
+          end(resolve);
+        }
       };
       xhr.onerror = function(ev) {
         end(
@@ -284,10 +291,6 @@ class NoteStore {
       }
     }
 
-    if (note === null) {
-      return null; // There aren't any Notes.
-    }
-
     // If we still haven't returned, then we've passed the end of the
     // document. Return the first Note.
     for (let i = 0; i < ii; i++) {
@@ -297,7 +300,7 @@ class NoteStore {
       }
     }
 
-    throw new Error("This function has a bug");
+    return null; // There aren't any Notes.
   }
 
   /**
@@ -320,10 +323,6 @@ class NoteStore {
       }
     }
 
-    if (note === null) {
-      return null; // There aren't any Notes.
-    }
-
     // If we still haven't returned, then we've passed the end of the
     // document. Return the last Note.
     for (let i = this._data.length - 1; i >= 0; i--) {
@@ -333,7 +332,7 @@ class NoteStore {
       }
     }
 
-    throw new Error("This function has a bug");
+    return null; // There aren't any Notes.
   }
 
   /**
