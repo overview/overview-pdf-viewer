@@ -200,7 +200,7 @@ var EditNoteTool = (function EditNoteToolClosure() {
             self.div.classList.remove('saving');
             self._enableToolbarButtons();
             self._enableForm();
-            self.div.querySelector('button').disabled = true; // until an edit
+            self.div.querySelector('form button').disabled = true; // until an edit
           },
           function(err) {
             self.div.classList.remove('saving');
