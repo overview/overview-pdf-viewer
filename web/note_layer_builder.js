@@ -20,16 +20,18 @@ import { NoteLayer } from "pdfjs-lib";
  * @property {HTMLDivElement} pageDiv
  * @property {PDFPage} pdfPage
  * @property {NoteStore} noteStore
+ * @property {EventBus} eventBus
  */
 
 class NoteLayerBuilder {
   /**
    * @param {NoteLayerBuilderOptions} options
    */
-  constructor({ pageDiv, pdfPage, noteStore, div = null }) {
+  constructor({ pageDiv, pdfPage, eventBus, noteStore, div = null }) {
     this.pageDiv = pageDiv;
     this.pdfPage = pdfPage;
     this.noteStore = noteStore;
+    this.eventBus = eventBus;
     this.div = div;
   }
 
@@ -47,6 +49,24 @@ class NoteLayerBuilder {
       this.div = document.createElement("div");
       this.div.className = "noteLayer";
       this.pageDiv.appendChild(this.div);
+
+      if (this.eventBus && this.noteStore) {
+        this.div.addEventListener("click", ev => {
+          if (ev.target.nodeName === "SECTION") {
+            const i = Array.prototype.indexOf.call(
+              this.div.childNodes,
+              ev.target
+            );
+            if (i !== -1) {
+              const note = this.noteStore.getNote(
+                this.pdfPage.pageNumber - 1,
+                i
+              );
+              this.eventBus.dispatch("clicknote", note);
+            }
+          }
+        });
+      }
     }
 
     const parameters = {
@@ -88,6 +108,7 @@ class NoteLayerFactory {
       pageDiv,
       pdfPage,
       noteStore: this.noteStore,
+      eventBus: this.noteStore ? this.noteStore.eventBus : null,
     });
   }
 }

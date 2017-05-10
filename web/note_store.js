@@ -234,6 +234,13 @@ class NoteStore {
     return this._data[pageIndex] || [];
   }
 
+  /**
+   * Fetches a single Note.
+   */
+  getNote(pageIndex, indexOnPage) {
+    return (this._data[pageIndex] || [])[indexOnPage] || null;
+  }
+
   _setData(data) {
     this._data = data;
     this.eventBus.dispatch("noteschanged");
