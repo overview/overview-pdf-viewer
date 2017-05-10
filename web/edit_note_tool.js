@@ -255,11 +255,6 @@ var EditNoteTool = (function EditNoteToolClosure() {
       div.querySelector('textarea').value = note.text;
 
       this._updateDomPositions();
-
-      scrollIntoView(this.div.querySelector('.editNotePopup'), {
-        top: -80, // so the edit-note toolbar appears, which is negative-offset
-        left: 0,
-      });
     },
 
     _updateDomPositions: function() {
@@ -314,6 +309,11 @@ var EditNoteTool = (function EditNoteToolClosure() {
       popup.style.height = position.height + 'px';
       popup.style.left = (pageDiv.offsetLeft + parseFloat(pageStyle.borderLeftWidth)) + 'px';
       popup.style.width = pageDiv.clientWidth + 'px';
+
+      scrollIntoView(this.div.querySelector('.editNotePopup'), {
+        top: -80, // so the edit-note toolbar appears, which is negative-offset
+        left: 0,
+      });
     },
   };
 
