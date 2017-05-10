@@ -83,6 +83,7 @@ var EditNoteTool = (function EditNoteToolClosure() {
     },
 
     _attachEventBus: function() {
+      this.eventBus.on('clicknote', this.setNote.bind(this));
       this.eventBus.on('movetonextnote', this.moveToNext.bind(this));
       this.eventBus.on('movetopreviousnote', this.moveToPrevious.bind(this));
       this.eventBus.on('updateviewarea', this._updateDomPositions.bind(this));

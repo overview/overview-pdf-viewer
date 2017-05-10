@@ -19,6 +19,7 @@ import { NoteLayer} from './note_layer';
  * @property {HTMLDivElement} pageDiv
  * @property {PDFPage} pdfPage
  * @property {NoteStore} noteStore
+ * @property {EventBus} eventBus
  */
 
 class NoteLayerBuilder {
@@ -29,6 +30,7 @@ class NoteLayerBuilder {
     this.pageDiv = options.pageDiv;
     this.pdfPage = options.pdfPage;
     this.noteStore = options.noteStore;
+    this.eventBus = options.eventBus;
     this.div = null;
   }
 
@@ -50,9 +52,24 @@ class NoteLayerBuilder {
     if (this.div) {
       this.div.innerHTML = '';
     } else {
-      this.div = document.createElement('div');
+      var div = this.div = document.createElement('div');
       this.div.className = 'noteLayer';
       this.pageDiv.appendChild(this.div);
+
+      if (this.eventBus && this.noteStore) {
+        var self = this;
+        this.div.addEventListener('click', function(ev) {
+          if (ev.target.nodeName === 'SECTION') {
+            for (var i = 0, ii = div.childNodes.length; i < ii; i++) {
+              var node = div.childNodes[i];
+              if (node === ev.target) {
+                var note = self.noteStore.getNote(self.pdfPage.pageIndex, i);
+                self.eventBus.dispatch('clicknote', note);
+              }
+            }
+          }
+        });
+      }
     }
 
     parameters.div = this.div;
@@ -77,7 +94,12 @@ class DefaultNoteLayerFactory {
    * @returns {NoteLayerBuilder}
    */
   createNoteLayerBuilder(pageDiv, pdfPage) {
-    return new NoteLayerBuilder({ pageDiv, pdfPage, noteStore: null });
+    return new NoteLayerBuilder({
+      pageDiv,
+      pdfPage,
+      noteStore: null,
+      eventBus: null,
+    });
   }
 }
 

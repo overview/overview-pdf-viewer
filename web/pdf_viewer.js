@@ -927,7 +927,8 @@ var PDFViewer = (function pdfViewer() {
       return new NoteLayerBuilder({
         pageDiv,
         pdfPage,
-        noteStore: this.noteStore
+        noteStore: this.noteStore,
+        eventBus: this.eventBus,
       });
     },
 

@@ -288,9 +288,7 @@ var NoteStore = (function NoteStoreClosure() {
           // (See _save().)
           self._savePromise = self._nextSavePromise;
           self._nextSavePromise = null;
-          console.log('about to resolve', callback, arg);
-          window.setTimeout(function() { console.log('resolve/reject'); callback(arg); }, 1500); // XXX dev-only! Should never be committed.
-          // this is the correct line: callback(arg);
+          callback(arg);
         }
 
         var xhr = new XMLHttpRequest();
@@ -327,6 +325,13 @@ var NoteStore = (function NoteStoreClosure() {
      */
     getNotesForPageIndex: function NoteStore_getNotesForPageIndex(pageIndex) {
       return this._data[pageIndex] || [];
+    },
+
+    /**
+     * Fetches a single Note.
+     */
+    getNote: function NoteStore_getNote(pageIndex, indexOnPage) {
+      return (this._data[pageIndex] || [])[indexOnPage] || null;
     },
 
     _setData: function NoteStore_setData(data) {
