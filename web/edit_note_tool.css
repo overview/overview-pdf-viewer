@@ -66,10 +66,6 @@
   display: flex;
 }
 
-.editNoteToolbar h4 {
-  display: inline-block;
-}
-
 .editNoteToolbar .space {
   flex: 1 1 auto;
 }
@@ -125,4 +121,100 @@
 
 .editNoteTool form button {
   align-self: flex-end;
+}
+
+.editNoteToolbar h4 {
+  font: inherit;
+  font-weight: bold;
+  margin-right: 2rem;
+}
+
+/* Make buttons look like links, with icons. */
+.editNoteToolbar button {
+  display: inline-block;
+  border: none;
+  padding: 0;
+  font: inherit;
+  color: inherit;
+  background: transparent;
+  cursor: pointer;
+}
+
+.editNoteToolbar button {
+  display: block;
+  position: relative;
+  margin-left: 1rem;
+  margin-right: 1rem;
+  line-height: 1;
+  height: 16px;
+  top: 1px; /* looks better -- all text happens to have no descenders */
+}
+
+.editNoteToolbar button:hover {
+  opacity: .7; /* brighten */
+}
+
+.editNoteToolbar button.editNotePrevious {
+  padding: 0 8px 0 24px;
+}
+
+.editNoteToolbar button.editNotePrevious::before {
+  content: '';
+  display: inline-block;
+  position: absolute;
+  width: 20px;
+  height: 20px;
+  left: 0;
+  top: -4px;
+  background-image: url(images/toolbarButton-previousNote@2x.png);
+  background-size: 100%;
+}
+
+.editNoteToolbar button.editNoteNext {
+  padding: 0 24px 0 8px;
+}
+
+.editNoteToolbar button.editNoteNext::after {
+  content: '';
+  display: inline-block;
+  position: absolute;
+  width: 20px;
+  height: 20px;
+  right: 0;
+  top: -4px;
+  background-image: url(images/toolbarButton-nextNote@2x.png);
+  background-size: 100%;
+}
+
+.editNoteToolbar button.editNoteDelete {
+  padding: 0 8px 0 24px;
+  color: #ff3333;
+}
+
+.editNoteToolbar button.editNoteDelete::before {
+  content: '';
+  display: inline-block;
+  position: absolute;
+  width: 16px;
+  height: 16px;
+  left: 4px;
+  top: -2px;
+  background-image: url(images/editNoteButton-delete@2x.png);
+  background-size: 100%;
+}
+
+.editNoteToolbar button.editNoteClose {
+  padding: 0 24px 0 8px;
+  margin-right: -4px;
+}
+
+.editNoteToolbar button.editNoteClose::before {
+  content: '✖';
+  display: inline-block;
+  position: absolute;
+  font-size: 20px;
+  width: 16px;
+  height: 16px;
+  right: 4px;
+  top: -2px;
 }
