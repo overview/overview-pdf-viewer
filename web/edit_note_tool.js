@@ -39,12 +39,24 @@ const EditNoteTreeSpec = [
           {
             tag: "button",
             attrs: { class: "editNotePrevious" },
-            text: "Previous",
+            children: [{ tag: "span", text: "Previous" }],
           },
-          { tag: "button", attrs: { class: "editNoteNext" }, text: "Next" },
+          {
+            tag: "button",
+            attrs: { class: "editNoteNext" },
+            children: [{ tag: "span", text: "Next" }],
+          },
           { tag: "span", attrs: { class: "space" } },
-          { tag: "button", attrs: { class: "editNoteDelete" }, text: "Delete" },
-          { tag: "button", attrs: { class: "editNoteClose" }, text: "Close" },
+          {
+            tag: "button",
+            attrs: { class: "editNoteDelete" },
+            children: [{ tag: "span", text: "Delete" }],
+          },
+          {
+            tag: "button",
+            attrs: { class: "editNoteClose" },
+            children: [{ tag: "span", text: "Close" }],
+          },
         ],
       },
       { tag: "div", attrs: { class: "editNoteHighlight" } },
