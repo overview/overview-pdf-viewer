@@ -63,7 +63,7 @@ var EditNoteTool = (function EditNoteToolClosure() {
       '<form method="POST" action="">',
         '<div>',
           '<textarea name="note"></textarea>',
-          '<button class="editNoteSave" disabled>Save</button>',
+          '<button class="editNoteSave" disabled><span>Save</span></button>',
         '</div>',
       '</form>',
     '</div>',
@@ -125,42 +125,91 @@ var EditNoteTool = (function EditNoteToolClosure() {
       }
     },
 
+    _setError: function(err) {
+      console.warn(err);
+
+      this.div.classList.add('error');
+
+      this._disableToolbarButtons();
+      var error = document.createElement('p');
+      error.className = 'error';
+      error.textContent =
+        'Save failed. Please reload this document and try again.';
+
+      this._disableForm();
+      var form = this.div.querySelector('form');
+      form.appendChild(error);
+    },
+
     deleteNote: function() {
       var noteStore = this.pdfViewer.noteStore; // assume it's set
 
-      var controls = this.div.querySelector('button, textarea, form');
-      for (var i = 0, ii = controls.length; i < ii; i++) {
-        controls[i].setAttribute('disabled', true);
-      }
+      this._disableToolbarButtons();
+      this._disableForm();
 
-      var button = this.div.querySelector('button.editNoteDelete');
-      button.classList.add('deleting');
+      this.div.classList.add('deleting');
 
       var self = this;
       return noteStore.deleteNote(this.currentNote)
-        .then(function() {
-          self.setNote(null);
-        });
+        .then(
+          // No need to unset 'deleting': the entire div is about to disappear
+          function() { self.setNote(null); },
+          function(err) { self._setError(err); }
+        );
+    },
+
+    _disableToolbarButtons: function() {
+      var buttons = this.div.querySelectorAll('.editNoteToolbar button');
+      for (var i = 0, ii = buttons.length; i < ii; i++) {
+        buttons[i].disabled = true;
+      }
+    },
+
+    _enableToolbarButtons: function() {
+      var buttons = this.div.querySelectorAll('.editNoteToolbar button');
+      for (var i = 0, ii = buttons.length; i < ii; i++) {
+        buttons[i].disabled = false;
+      }
+    },
+
+    _disableForm: function() {
+      this.div.querySelector('textarea').disabled = true;
+      this.div.querySelector('form button').disabled = true;
+    },
+
+    _enableForm: function() {
+      this.div.querySelector('textarea').disabled = false;
+      this.div.querySelector('form button').disabled = false;
     },
 
     saveNote: function() {
       var noteStore = this.pdfViewer.noteStore; // assume it's set
 
-      var button = this.div.querySelector('form button');
-      button.setAttribute('disabled', true);
-      button.classList.add('saving');
+      this.div.classList.add('saving');
+      this._disableToolbarButtons();
+      this._disableForm();
 
       var textarea = this.div.querySelector('form textarea');
       var text = textarea.value;
 
+      var self = this;
       return noteStore.setNoteText(this.currentNote, text)
-        .then(function() {
-          button.classList.remove('saving');
-        });
+        .then(
+          function() {
+            self.div.classList.remove('saving');
+            self._enableToolbarButtons();
+            self._enableForm();
+            self.div.querySelector('button').disabled = true; // until an edit
+          },
+          function(err) {
+            self.div.classList.remove('saving');
+            self._setError(err);
+          }
+        );
     },
 
     _onTextInput: function(ev) {
-      ev.target.nextSibling.removeAttribute('disabled');
+      ev.target.nextSibling.disabled = false;
     },
 
     _onMousedownBackground: function(ev) {

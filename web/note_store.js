@@ -188,10 +188,6 @@ var NoteStore = (function NoteStoreClosure() {
         }
       }
 
-      if (note === null) {
-        return null; // There aren't any Notes.
-      }
-
       // If we still haven't returned, then we've passed the end of the
       // document. Return the first Note.
       for (i = 0, ii = this._data.length; i < ii; i++) {
@@ -201,7 +197,7 @@ var NoteStore = (function NoteStoreClosure() {
         }
       }
 
-      throw new Error('This function has a bug');
+      return null; // there are no notes
     },
 
     /**
@@ -226,10 +222,6 @@ var NoteStore = (function NoteStoreClosure() {
         }
       }
 
-      if (note === null) {
-        return null; // There aren't any Notes.
-      }
-
       // If we still haven't returned, then we've passed the end of the
       // document. Return the last Note.
       for (i = this._data.length - 1; i >= 0; i--) {
@@ -239,7 +231,7 @@ var NoteStore = (function NoteStoreClosure() {
         }
       }
 
-      throw new Error('This function has a bug');
+      return null; // there are no notes
     },
 
     /**
@@ -262,7 +254,7 @@ var NoteStore = (function NoteStoreClosure() {
         return Promise.reject(new Error('You must setPdfDocument() before saving'));
       }
 
-      self.loaded.then(function() {
+      return self.loaded.then(function() {
         if (!self._isChangedSinceLastSave) {
           return self._savePromise || Promise.resolve(null);
         }
@@ -296,12 +288,20 @@ var NoteStore = (function NoteStoreClosure() {
           // (See _save().)
           self._savePromise = self._nextSavePromise;
           self._nextSavePromise = null;
-          callback(arg);
+          console.log('about to resolve', callback, arg);
+          window.setTimeout(function() { console.log('resolve/reject'); callback(arg); }, 1500); // XXX dev-only! Should never be committed.
+          // this is the correct line: callback(arg);
         }
 
         var xhr = new XMLHttpRequest();
         xhr.onload = function() {
-          end(resolve);
+          if (Math.floor(xhr.status / 100) !== 2) {
+            end(reject,
+              new Error('Save failed: ' + xhr.status + ' ' + xhr.statusText)
+            );
+          } else {
+            end(resolve);
+          }
         };
         xhr.onerror = function(ev) {
           end(reject,

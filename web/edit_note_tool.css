@@ -121,6 +121,67 @@
 
 .editNoteTool form button {
   align-self: flex-end;
+  border: 0;
+  position: relative;
+  padding: 8px 4px 4px 24px;
+  margin: 0;
+  left: 4px; /* because of padding-right 4px */
+  top: 7px; /* because of padding-bottom 4px and vertical-align: -3px */
+  font: inherit;
+  line-height: 1;
+  background: white;
+  color: inherit;
+  cursor: pointer;
+}
+
+.editNoteTool form button span {
+  vertical-align: -3px; /* no descenders */
+}
+
+.editNoteTool form button::before {
+  content: '';
+  display: block;
+  position: absolute;
+  left: 4px;
+  width: 16px;
+  height: 16px;
+  background-image: url(images/save@2x.png);
+  background-size: 100%;
+}
+
+.editNoteTool.error form button,
+.editNoteTool.error .editNoteToolbar button.editNoteDelete {
+  color: rgb(255, 102, 102);
+}
+
+.editNoteTool.saving:not(.error) form button::before,
+.editNoteTool.deleting:not(.error) .editNoteToolbar button.editNoteDelete::before {
+  background-image: none;
+  width: 8px;
+  height: 8px;
+  border: 4px solid #f0f0f0;
+  border-top-color: #333;
+  border-radius: 50%;
+  animation: spin 1s infinite linear;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.editNoteTool.error form button::before,
+.editNoteTool.error .editNoteToolbar button.editNoteDelete::before {
+  background-image: none;
+  content: '⚠';
+  font-size: 20px;
+  font-weight: bold;
+} 
+
+.editNoteTool p.error {
+  text-align: center;
+  color: rgb(255, 102, 102);
+  margin-top: 1rem;
 }
 
 .editNoteToolbar h4 {
@@ -152,6 +213,10 @@
 
 .editNoteToolbar button:hover {
   opacity: .7; /* brighten */
+}
+
+.editNoteTool * button:disabled { /* '*' adds specificity */
+  opacity: .3;
 }
 
 .editNoteToolbar button.editNotePrevious {
