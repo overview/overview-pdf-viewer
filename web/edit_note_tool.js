@@ -320,11 +320,6 @@ class EditNoteTool {
     div.querySelector("textarea").value = currentNote.text;
 
     this._updateDomPositions();
-
-    scrollIntoView(this.div.querySelector(".editNotePopup"), {
-      top: -80, // so the edit-note toolbar appears, which is negative-offset
-      left: 0,
-    });
   }
 
   _updateDomPositions() {
@@ -392,6 +387,11 @@ class EditNoteTool {
     popup.style.left =
       pageDiv.offsetLeft + parseFloat(pageStyle.borderLeftWidth) + "px";
     popup.style.width = pageDiv.clientWidth + "px";
+
+    scrollIntoView(this.div.querySelector(".editNotePopup"), {
+      top: -80, // so the edit-note toolbar appears, which is negative-offset
+      left: 0,
+    });
   }
 }
 
