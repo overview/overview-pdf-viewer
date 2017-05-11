@@ -142,6 +142,10 @@ class EditNoteTool {
     while (this.div.lastElementChild) {
       this.div.lastElementChild.remove();
     }
+    this.div.classList.remove("deleting");
+    this.div.classList.remove("error");
+    this.div.classList.remove("saving");
+
     // Add new DOM, if there's a note
     if (this.currentNote !== null) {
       const fragment = createEditNoteFragment();
