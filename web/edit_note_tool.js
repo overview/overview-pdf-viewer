@@ -363,6 +363,10 @@ class EditNoteTool {
     position.height = position.bottom - position.top;
     position.width = position.right - position.left;
 
+    this.div.hidden = true;
+    this.div.style.width = this.container.scrollWidth + "px";
+    this.div.hidden = false;
+
     const bg = div.querySelector(".editNoteBackground");
 
     const bgAbove = bg.querySelector(".bgAbove");
