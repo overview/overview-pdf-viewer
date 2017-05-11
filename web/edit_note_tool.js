@@ -13,7 +13,6 @@
  * limitations under the License.
  */
 
-import { scrollIntoView } from "./ui_utils.js";
 import { Util } from "../src/shared/util.js";
 
 const EditNoteTreeSpec = [
@@ -108,6 +107,14 @@ function createEditNoteFragment() {
   return fragment;
 }
 
+function setAutoOpen(autoOpen) {
+  localStorage.setItem("pdfjs.autoOpenFirstNote", JSON.stringify(autoOpen));
+}
+
+function getAutoOpen() {
+  return localStorage.getItem("pdfjs.autoOpenFirstNote") === "true";
+}
+
 /**
  * @typedef {Object} EditNoteToolOptions
  * @property {HTMLDivElement} container - The document container.
@@ -152,6 +159,10 @@ class EditNoteTool {
       this._attachDom();
       this._updateDom();
     }
+
+    if (!this._isAutoOpening) {
+      setAutoOpen(note !== null);
+    }
   }
 
   _attachEventBus() {
@@ -159,6 +170,25 @@ class EditNoteTool {
     this.eventBus.on("movetonextnote", this.moveToNext.bind(this));
     this.eventBus.on("movetopreviousnote", this.moveToPrevious.bind(this));
     this.eventBus.on("updateviewarea", this._updateDomPositions.bind(this));
+    this.eventBus.on("documentloaded", this._onDocumentLoad.bind(this));
+  }
+
+  _onDocumentLoad() {
+    // Auto-open
+    //
+    // this._isAutoOpening is true iff we're loading and localStorage says the
+    // user wants auto-open. We use it so that even if _this_ document has no
+    // notes, the user can open it and browse it ... and then the _next_
+    // document that _does_ have notes will auto-open the first note.
+    this._isAutoOpening = getAutoOpen();
+    if (this._isAutoOpening && this.noteStore) {
+      Promise.all([this.noteStore.loaded, this.pdfViewer.onePageRendered]).then(
+        () => {
+          this.moveToNext();
+          this._isAutoOpening = false;
+        }
+      );
+    }
   }
 
   _attachDom() {
@@ -396,10 +426,9 @@ class EditNoteTool {
       pageDiv.offsetLeft + parseFloat(pageStyle.borderLeftWidth) + "px";
     popup.style.width = pageDiv.clientWidth + "px";
 
-    scrollIntoView(this.div.querySelector(".editNotePopup"), {
-      top: -80, // so the edit-note toolbar appears, which is negative-offset
-      left: 0,
-    });
+    // scrollIntoView() won't work because popup.offsetParent is the empty
+    // div.editTool we use for positioning.
+    this.container.scrollTop = position.top - 100; // 100px is arbitrary
   }
 }
 
