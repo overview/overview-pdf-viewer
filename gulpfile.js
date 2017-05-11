@@ -565,11 +565,6 @@ gulp.task('minified-pre', ['buildnumber'], function () {
 });
 
 gulp.task('minified-post', ['minified-pre'], function () {
-  var viewerFiles = [
-    MINIFIED_DIR + BUILD_DIR + 'pdf.js',
-    MINIFIED_DIR + '/web/viewer.js'
-  ];
-
   console.log();
   console.log('### Minifying js files');
 
@@ -577,24 +572,25 @@ gulp.task('minified-post', ['minified-pre'], function () {
   // V8 chokes on very long sequences. Works around that.
   var optsForHugeFile = {compress: {sequences: false}};
 
-  fs.writeFileSync(MINIFIED_DIR + '/web/pdf.viewer.js',
-                   UglifyJS.minify(viewerFiles).code);
-  fs.writeFileSync(MINIFIED_DIR + '/build/pdf.min.js',
-                   UglifyJS.minify(MINIFIED_DIR + '/build/pdf.js').code);
-  fs.writeFileSync(MINIFIED_DIR + '/build/pdf.worker.min.js',
-                   UglifyJS.minify(MINIFIED_DIR + '/build/pdf.worker.js',
-                                   optsForHugeFile).code);
+  [ 'web/viewer.js', 'build/pdf.js', 'build/pdf.worker.js' ].forEach(function(js) {
+    var jsPath = MINIFIED_DIR + '/' + js;
+    var mapPath = jsPath + '.map';
+    var relativeMapPath = mapPath.replace(/.*\//, '');
+
+    var result = UglifyJS.minify(jsPath, Object.assign(
+      js == 'build/pdf.worker.js' ? optsForHugeFile : {},
+      {
+        inSourceMap: mapPath,
+        outSourceMap: relativeMapPath,
+      }
+    ));
+
+    fs.writeFileSync(jsPath, result.code);
+    fs.writeFileSync(mapPath, result.map);
+  });
 
   console.log();
   console.log('### Cleaning js files');
-
-  fs.unlinkSync(MINIFIED_DIR + '/web/viewer.js');
-  fs.unlinkSync(MINIFIED_DIR + '/build/pdf.js');
-  fs.unlinkSync(MINIFIED_DIR + '/build/pdf.worker.js');
-  fs.renameSync(MINIFIED_DIR + '/build/pdf.min.js',
-                MINIFIED_DIR + '/build/pdf.js');
-  fs.renameSync(MINIFIED_DIR + '/build/pdf.worker.min.js',
-                MINIFIED_DIR + '/build/pdf.worker.js');
 });
 
 gulp.task('minified', ['minified-post']);

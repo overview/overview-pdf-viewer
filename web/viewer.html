@@ -29,21 +29,6 @@ See https://github.com/adobe-type-tools/cmap-resources
     <title>PDF.js viewer</title>
 
     <link rel="stylesheet" href="viewer.css">
-<!--#if !PRODUCTION-->
-    <script src="../node_modules/systemjs/dist/system.js"></script>
-    <script src="../systemjs.config.js"></script>
-<!--#endif-->
-
-<!--#if (GENERIC && !MINIFIED) -->
-<!--#include viewer-snippet.html-->
-<!--#endif-->
-
-<!--#if !MINIFIED -->
-    <script src="viewer.js"></script>
-<!--#else-->
-<!--#include viewer-snippet-minified.html-->
-<!--#endif-->
-
   </head>
 
   <body tabindex="1" class="loadingInProgress">
@@ -315,5 +300,13 @@ See https://github.com/adobe-type-tools/cmap-resources
       </div>  <!-- overlayContainer -->
 
     </div> <!-- outerContainer -->
+
+<!--#if !PRODUCTION-->
+    <script src="../node_modules/systemjs/dist/system.js"></script>
+    <script src="../systemjs.config.js"></script>
+<!--#endif-->
+
+    <script src="../build/pdf.js"></script>
+    <script src="viewer.js"></script>
   </body>
 </html>

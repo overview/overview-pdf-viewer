@@ -21,6 +21,7 @@ var DEFAULT_URL = 'compressed.tracemonkey-pldi-09.pdf';
 var pdfjsWebApp;
 if (typeof PDFJSDev !== 'undefined' && PDFJSDev.test('PRODUCTION')) {
   pdfjsWebApp = require('./app.js');
+  DEFAULT_URL = ''; // in non-dev, on-page JS must open() manually
 }
 if (typeof PDFJSDev !== 'undefined' && PDFJSDev.test('GENERIC')) {
   require('./genericcom.js');
