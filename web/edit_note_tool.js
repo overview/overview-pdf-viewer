@@ -13,7 +13,6 @@
  * limitations under the License.
  */
 import { Util } from '../src/shared/util';
-import { scrollIntoView } from './ui_utils';
 
 /**
  * @typedef {Object} EditNoteToolOptions
@@ -26,6 +25,14 @@ import { scrollIntoView } from './ui_utils';
  * @class
  */
 var EditNoteTool = (function EditNoteToolClosure() {
+  function setAutoOpen(bool) {
+    localStorage.setItem('pdfjs.autoOpenFirstNote', bool ? 'true' : 'false');
+  }
+
+  function getAutoOpen() {
+    return localStorage.getItem('pdfjs.autoOpenFirstNote') == 'true';
+  }
+
   /**
    * @constructs EditNoteTool
    * @param {EditNoteToolOptions} options
@@ -79,10 +86,14 @@ var EditNoteTool = (function EditNoteToolClosure() {
 
       if (this.currentNote === null) {
         this.div.innerHTML = '';
+        if (!this._autoOpening) {
+          setAutoOpen(false);
+        }
       } else {
         this.div.innerHTML = EditNoteHtml;
         this._attachDom();
         this._updateDom();
+        setAutoOpen(true);
       }
     },
 
@@ -91,6 +102,28 @@ var EditNoteTool = (function EditNoteToolClosure() {
       this.eventBus.on('movetonextnote', this.moveToNext.bind(this));
       this.eventBus.on('movetopreviousnote', this.moveToPrevious.bind(this));
       this.eventBus.on('updateviewarea', this._updateDomPositions.bind(this));
+      this.eventBus.on('documentload', this._onDocumentLoad.bind(this));
+    },
+
+    _onDocumentLoad: function EditNoteTool_onDocumentLoad() {
+      // Auto-open
+      //
+      // _autoOpening is true iff we're loading and localStorage says the user
+      // wants auto-open. We use it so that even if _this_ document has no notes,
+      // the user can open it and browse it ... and then the _next_ document that
+      // _does_ have notes will auto-open the first note.
+      this._autoOpening = getAutoOpen();
+      if (this._autoOpening) {
+        var self = this;
+        Promise.all([
+          this.pdfViewer.noteStore.loaded,
+          this.pdfViewer.onePageRendered,
+        ])
+          .then(function() {
+            self.moveToNext();
+            self._autoOpening = false;
+          });
+      }
     },
 
     _attachDom: function() {
@@ -319,10 +352,9 @@ var EditNoteTool = (function EditNoteToolClosure() {
       popup.style.left = (pageDiv.offsetLeft + parseFloat(pageStyle.borderLeftWidth)) + 'px';
       popup.style.width = pageDiv.clientWidth + 'px';
 
-      scrollIntoView(this.div.querySelector('.editNotePopup'), {
-        top: -80, // so the edit-note toolbar appears, which is negative-offset
-        left: 0,
-      });
+      // scrollIntoView() won't work because popup.offsetParent is the empty
+      // div.editTool we use for positioning.
+      this.container.scrollTop = position.top - 100; // 100px is arbitrary
     },
   };
 
