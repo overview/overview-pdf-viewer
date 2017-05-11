@@ -293,12 +293,12 @@ var EditNoteTool = (function EditNoteToolClosure() {
 
       var bgLeft = bg.querySelector('.bgLeft');
       bgLeft.style.top = position.top + 'px';
-      bgLeft.style.width = position.left + 'px';
+      bgLeft.style.width = pageDiv.offsetLeft + 'px';
       bgLeft.style.height = position.height + 'px';
 
       var bgRight = bg.querySelector('.bgRight');
       bgRight.style.top = position.top + 'px';
-      bgRight.style.left = position.right + 'px';
+      bgRight.style.left = pageDiv.offsetLeft + pageDiv.offsetWidth + 'px';
       bgRight.style.height = position.height + 'px';
 
       var bgBelow = bg.querySelector('.bgBelow');
