@@ -370,12 +370,12 @@ class EditNoteTool {
 
     const bgLeft = bg.querySelector(".bgLeft");
     bgLeft.style.top = position.top + "px";
-    bgLeft.style.width = position.left + "px";
+    bgLeft.style.width = pageDiv.offsetLeft + "px";
     bgLeft.style.height = position.height + "px";
 
     const bgRight = bg.querySelector(".bgRight");
     bgRight.style.top = position.top + "px";
-    bgRight.style.left = position.right + "px";
+    bgRight.style.left = pageDiv.offsetLeft + pageDiv.offsetWidth + "px";
     bgRight.style.height = position.height + "px";
 
     const bgBelow = bg.querySelector(".bgBelow");
