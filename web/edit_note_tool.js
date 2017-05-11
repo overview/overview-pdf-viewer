@@ -73,6 +73,10 @@ var EditNoteTool = (function EditNoteToolClosure() {
     setNote: function EditNoteTool_setNote(note) {
       this.currentNote = note;
 
+      this.div.classList.remove('deleting');
+      this.div.classList.remove('error');
+      this.div.classList.remove('saving');
+
       if (this.currentNote === null) {
         this.div.innerHTML = '';
       } else {
