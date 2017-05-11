@@ -35,7 +35,6 @@ const EditNoteTreeSpec = [
         tag: "div",
         attrs: { class: "editNoteToolbar" },
         children: [
-          { tag: "h4", text: "Note" },
           {
             tag: "button",
             attrs: { class: "editNotePrevious" },
