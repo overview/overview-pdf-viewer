@@ -286,6 +286,10 @@ var EditNoteTool = (function EditNoteToolClosure() {
       position.height = position.bottom - position.top;
       position.width = position.right - position.left;
 
+      this.div.hidden = true;
+      this.div.style.width = this.container.scrollWidth + 'px';
+      this.div.hidden = false;
+
       var bg = div.querySelector('.editNoteBackground');
 
       var bgAbove = bg.querySelector('.bgAbove');
