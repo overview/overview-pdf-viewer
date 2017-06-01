@@ -179,9 +179,9 @@ var Toolbar = (function ToolbarClosure() {
         isAddingNoteActive = e.isActive;
         if (isAddingNoteActive) {
           addingNoteButton.classList.add('toggled');
-          addingNoteButton.title = 'Click and drag on a page to add a note';
+          addingNoteButton.title = 'Click and drag on a page…';
           addingNoteButton.firstElementChild.textContent =
-            'Click and drag on a page to add a note';
+            'Click and drag on a page…';
         } else {
           addingNoteButton.classList.remove('toggled');
           addingNoteButton.title = 'Add Note';
