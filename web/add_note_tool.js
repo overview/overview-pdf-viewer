@@ -195,14 +195,18 @@ var AddNoteTool = (function AddNoteToolClosure() {
         rectInPx.y + rectInPx.height
       );
 
-      this.pdfViewer.noteStore.add({
+      var note = {
         pageIndex: pageIndex,
         x: Math.min(p0[0], p1[0]),
         y: Math.min(p0[1], p1[1]),
         width: Math.abs(p1[0] - p0[0]),
         height: Math.abs(p1[1] - p0[1]),
         text: '',
-      })
+      };
+
+      this.pdfViewer.noteStore.add(note);
+
+      this.eventBus.dispatch('clicknote', note);
     },
 
     deactivate: function() {

@@ -357,14 +357,9 @@ var NoteStore = (function NoteStoreClosure() {
           self._data.push([]);
         }
 
-        self._data[note.pageIndex].push({
-          pageIndex: note.pageIndex,
-          x: note.x,
-          y: note.y,
-          width: note.width,
-          height: note.height,
-          text: note.text,
-        });
+        // We store the exact Object we were given. That way, the caller can
+        // deleteNote() with the same handle the called addNote() with.
+        self._data[note.pageIndex].push(note);
 
         // Keep list sorted.
         // [adam] in-order .splice() would be better. I'm too lazy today.
