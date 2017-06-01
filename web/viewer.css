@@ -823,16 +823,58 @@ html[dir='rtl'] .toolbarButton.pageDown::before {
   content: url(images/toolbarButton-zoomIn.png);
 }
 
+.toolbarButton.addNote::before,
+.toolbarButton.nextNote::before,
+.toolbarButton.previousNote::before {
+  content: '';
+  display: inline-block;
+  /* hard-code size of image */
+  width: 16px;
+  height: 16px;
+  background-size: 100%;
+}
+
+@media screen and (min-resolution: 1.1dppx) {
+  .toolbarButton.addNote::before {
+    left: auto !important; /* override @media screen and (min-resolution: 1.1dppx) html[dir='ltr'] .toolbarButton::before */
+  }
+
+  .toolbarButton.addNote::before,
+  .toolbarButton.nextNote::before,
+  .toolbarButton.previousNote::before {
+    /* 32px will be resized by scale(0.5) */
+    width: 32px;
+    height: 32px;
+  }
+}
+
 .toolbarButton.addNote::before {
-  content: url(images/toolbarButton-addNote@2x.png);
+  background-image: url(images/toolbarButton-addNote@2x.png);
 }
 
 .toolbarButton.nextNote::before {
-  content: url(images/toolbarButton-nextNote@2x.png);
+  background-image: url(images/toolbarButton-nextNote@2x.png);
 }
 
 .toolbarButton.previousNote::before {
-  content: url(images/toolbarButton-previousNote@2x.png);
+  background-image: url(images/toolbarButton-previousNote@2x.png);
+}
+
+@media (min-width: 780px) {
+  /* Display the "Add Note" (and "Click and drag...") inline */
+  .toolbarButton.addNote::before {
+    right: -1px;
+  }
+
+  .toolbarButton.addNote {
+    width: auto;
+  }
+
+  .toolbarButton.addNote span {
+    width: auto;
+    height: auto;
+    padding-right: 22px;
+  }
 }
 
 .toolbarButton.presentationMode::before,

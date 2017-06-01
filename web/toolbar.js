@@ -187,9 +187,8 @@ class Toolbar {
       isAddingNoteActive = e.isActive;
       if (isAddingNoteActive) {
         addNote.classList.add("toggled");
-        addNote.title = "Click and drag on a page to add a note";
-        addNote.firstElementChild.textContent =
-          "Click and drag on a page to add a note";
+        addNote.title = "Click and drag on a page…";
+        addNote.firstElementChild.textContent = "Click and drag on a page…";
       } else {
         addNote.classList.remove("toggled");
         addNote.title = "Add Note";
