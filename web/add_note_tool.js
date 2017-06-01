@@ -189,14 +189,17 @@ class AddNoteTool {
       rectInPx.y + rectInPx.height
     );
 
-    pageView.noteLayerFactory.noteStore.add({
+    const note = {
       pageIndex,
       x: Math.min(p0[0], p1[0]),
       y: Math.min(p0[1], p1[1]),
       width: Math.abs(p1[0] - p0[0]),
       height: Math.abs(p1[1] - p0[1]),
       text: "",
-    });
+    };
+
+    pageView.noteLayerFactory.noteStore.add(note);
+    this.eventBus.dispatch("clicknote", note);
   }
 
   deactivate() {

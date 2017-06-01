@@ -65,7 +65,13 @@ const EditNoteTreeSpec = [
           {
             tag: "div",
             children: [
-              { tag: "textarea", attrs: { name: "note" } },
+              {
+                tag: "textarea",
+                attrs: {
+                  name: "note",
+                  placeholder: "Type your comments here",
+                },
+              },
               {
                 tag: "button",
                 attrs: { class: "editNoteSave", disabled: true },
@@ -158,6 +164,8 @@ class EditNoteTool {
       this.div.appendChild(fragment);
       this._attachDom();
       this._updateDom();
+
+      this.div.querySelector("textarea").focus();
     }
 
     if (!this._isAutoOpening) {
@@ -213,6 +221,9 @@ class EditNoteTool {
     this.div
       .querySelector("form")
       .addEventListener("submit", this._onSubmit.bind(this));
+    this.div
+      .querySelector("textarea")
+      .addEventListener("keydown", this._onKeydown.bind(this));
   }
 
   close() {
@@ -336,6 +347,15 @@ class EditNoteTool {
     this.close();
   }
 
+  _onKeydown(ev) {
+    switch (ev.keyCode) {
+      case 27: // Escape
+        ev.preventDefault();
+        ev.stopPropagation();
+        this.close();
+    }
+  }
+
   _onSubmit(ev) {
     ev.preventDefault();
     ev.stopPropagation();
@@ -357,7 +377,7 @@ class EditNoteTool {
   }
 
   _updateDomPositions() {
-    const { div, currentNote } = this;
+    const { div, container, currentNote } = this;
     if (!currentNote) {
       return;
     }
@@ -397,7 +417,7 @@ class EditNoteTool {
     position.width = position.right - position.left;
 
     this.div.hidden = true;
-    this.div.style.width = this.container.scrollWidth + "px";
+    this.div.style.width = container.scrollWidth + "px";
     this.div.hidden = false;
 
     const bg = div.querySelector(".editNoteBackground");
@@ -417,7 +437,7 @@ class EditNoteTool {
 
     const bgBelow = bg.querySelector(".bgBelow");
     bgBelow.style.top = position.bottom + "px";
-    bgBelow.style.height = this.container.scrollHeight - position.bottom + "px";
+    bgBelow.style.height = container.scrollHeight - position.bottom + "px";
 
     const popup = div.querySelector(".editNotePopup");
     popup.style.top = position.top + "px";
@@ -428,7 +448,22 @@ class EditNoteTool {
 
     // scrollIntoView() won't work because popup.offsetParent is the empty
     // div.editTool we use for positioning.
-    this.container.scrollTop = position.top - 100; // 100px is arbitrary
+    //
+    // Avoid scrolling the page if we can. Otherwise, scroll as little as
+    // possible. Make sure there's a bit of a margin above and below the
+    // popup.
+    const topMargin = 100; // px above the actual highlight
+    const bottomMargin = 150; // px below the actual highlight
+    const maxScrollTop = position.top - topMargin;
+    const minScrollTop =
+      position.bottom + bottomMargin - container.clientHeight;
+    if (container.scrollTop < minScrollTop) {
+      // We're too high. Scroll down.
+      container.scrollTop = minScrollTop;
+    } else if (container.scrollTop > maxScrollTop) {
+      // We're too low. Scroll up.
+      container.scrollTop = maxScrollTop;
+    } // else we don't need to scroll
   }
 }
 

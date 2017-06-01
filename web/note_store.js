@@ -258,14 +258,9 @@ class NoteStore {
         this._data.push([]);
       }
 
-      this._data[note.pageIndex].push({
-        pageIndex: note.pageIndex,
-        x: note.x,
-        y: note.y,
-        width: note.width,
-        height: note.height,
-        text: note.text,
-      });
+      // Store the exact Object we were given. That way, the caller can
+      // deleteNote() with the same handle the called addNote() with.
+      this._data[note.pageIndex].push(note);
 
       // Keep list sorted.
       // [adam] Obviously .splice() would be better, but I'm lazy.
