@@ -61,7 +61,7 @@ if (typeof PDFJSDev !== 'undefined' &&
     useRequireEnsure = true;
   }
   if (typeof requirejs !== 'undefined' && requirejs.toUrl) {
-    workerSrc = requirejs.toUrl('pdfjs-dist/build/pdf.worker.js');
+    workerSrc = requirejs.toUrl('pdfjs-dist/build/pdf.worker.js') || undefined;
   }
   var dynamicLoaderSupported =
     typeof requirejs !== 'undefined' && requirejs.load;
