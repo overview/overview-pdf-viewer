@@ -383,9 +383,6 @@ class EditNoteTool {
     }
 
     const note = currentNote;
-
-    div.querySelector("textarea").value = note.text;
-
     const pageView = this.pdfViewer.getPageView(note.pageIndex);
     const viewport = pageView.viewport;
     const pageDiv = pageView.div;
