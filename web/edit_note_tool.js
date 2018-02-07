@@ -231,7 +231,11 @@ class EditNoteTool {
   }
 
   get noteStore() {
-    return this.pdfViewer.getPageView(1).noteLayerFactory.noteStore;
+    const pageView = this.pdfViewer.getPageView(1);
+    if (!pageView) {
+      return null;
+    }
+    return pageView.noteLayerFactory.noteStore;
   }
 
   moveToPrevious() {
@@ -384,6 +388,9 @@ class EditNoteTool {
 
     const note = currentNote;
     const pageView = this.pdfViewer.getPageView(note.pageIndex);
+    if (!pageView) {
+      return;
+    }
     const viewport = pageView.viewport;
     const pageDiv = pageView.div;
     const noteRect = Util.normalizeRect(
