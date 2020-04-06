@@ -199,6 +199,52 @@ function webViewerLoad() {
     ]).then(function([app, appOptions, ...otherModules]) {
       window.PDFViewerApplication = app.PDFViewerApplication;
       window.PDFViewerApplicationOptions = appOptions.AppOptions;
+
+      // Create a fake NoteStore, to test the UI.
+      const fakeNoteStoreCreator = pdfUrl => {
+        const apiUrl = new URL(pdfUrl, window.location).href.replace(
+          /\.pdf$/,
+          "/notes"
+        );
+
+        const load = async () => {
+          return [
+            {
+              pageIndex: 2,
+              x: 72,
+              y: 144,
+              width: 200,
+              height: 100,
+              text: "Hi there",
+            },
+            {
+              pageIndex: 4,
+              x: 144,
+              y: 400,
+              width: 300,
+              height: 100,
+              text: "Hello again",
+            },
+          ];
+        };
+
+        const save = async notes => {
+          const response = await fetch(apiUrl, {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(notes),
+          });
+          if (response.status < 200 || response.status > 299) {
+            const text = await response.text();
+            throw new Error(
+              `${response.status} ${response.statusText}: ${text}`
+            );
+          }
+        };
+
+        return { load, save };
+      };
+      app.PDFViewerApplication.noteStoreApiCreator = fakeNoteStoreCreator;
       app.PDFViewerApplication.run(config);
     });
   } else {

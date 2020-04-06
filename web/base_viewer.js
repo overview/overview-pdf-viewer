@@ -65,6 +65,7 @@ const DEFAULT_CACHE_SIZE = 10;
  *   selection and searching is created, and if the improved text selection
  *   behaviour is enabled. The constants from {TextLayerMode} should be used.
  *   The default value is `TextLayerMode.ENABLE`.
+ * @property {NoteStoreApiCreator} [noteStoreApiCreator] - Note-store arg.
  * @property {string} [imageResourcesPath] - Path for image resources, mainly
  *   mainly for annotation icons. Include trailing slash.
  * @property {boolean} [renderInteractiveForms] - Enables rendering of
@@ -155,6 +156,7 @@ class BaseViewer {
     this.textLayerMode = Number.isInteger(options.textLayerMode)
       ? options.textLayerMode
       : TextLayerMode.ENABLE;
+    this.noteStoreApiCreator = options.noteStoreApiCreator || null;
     this.imageResourcesPath = options.imageResourcesPath || "";
     this.renderInteractiveForms = options.renderInteractiveForms || false;
     this.enablePrintAutoRotate = options.enablePrintAutoRotate || false;
@@ -421,7 +423,7 @@ class BaseViewer {
     const noteStore = url
       ? new NoteStore({
           eventBus: this.eventBus,
-          url: new URL(url, window.location).href.replace(/\.pdf$/, "/notes"),
+          api: this.noteStoreApiCreator(url),
         })
       : null;
 

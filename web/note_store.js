@@ -13,15 +13,12 @@
  * limitations under the License.
  */
 
-const LOAD_TIMEOUT = 30000; // ms
-const SAVE_TIMEOUT = 30000; // ms
-
 /**
  * Returns a String representing our in-memory data structure, suitable for
  * saving on the server.
  */
 function encode(data) {
-  return JSON.stringify(data.flat());
+  return data.flat();
 }
 
 /**
@@ -33,14 +30,7 @@ function encode(data) {
  *
  * Throws error on invalid data.
  */
-function decode(s) {
-  let arr;
-  try {
-    arr = JSON.parse(s);
-  } catch (e) {
-    throw new Error("Invalid JSON from server: " + e.message);
-  }
-
+function decode(arr) {
   if (!Array.isArray(arr)) {
     throw new Error("Expected JSON from server to be Array of objects");
   }
@@ -87,9 +77,39 @@ function compareNotes(a, b) {
 }
 
 /**
+ * @typedef {Function} NoteStoreApiCreator
+ *
+ * Supply something like this:
+ *
+ *     const noteStoreApiCreator = (pdfUrl) => {
+ *         const apiUrl = pdfUrl.replace(/.pdf$/, "/notes.json");
+ *         return {
+ *             async load() {
+ *                 return fetch(apiUrl).json();
+ *             }
+ *
+ *             async save(notes) {
+ *                 return fetch(
+ *                     apiUrl,
+ *                     { method: "PUT", body: JSON.stringify(notes) },
+ *                 );
+ *             }
+ *     });
+ */
+
+/**
+ * @typedef {Object} NoteStoreApi
+ *
+ * A caller-supplied API for accessing a document's notes.
+ *
+ * @property {Function} async load() - return all notes from server.
+ * @property {Function} async save(notes) - save all notes to the server.
+ */
+
+/**
  * @typedef {Object} NoteStoreOptions
  * @property {EventBus} eventBus - The application event bus.
- * @property {String} url - Endpoint for GET/PUT of notes.
+ * @property {NoteStoreApi} api - The note-storage logic.
  */
 
 /*
@@ -100,57 +120,24 @@ class NoteStore {
    * @constructs NoteStore
    * @param {NoteStoreOptions} options
    */
-  constructor({ eventBus, url }) {
+  constructor({ eventBus, api }) {
     this.eventBus = eventBus;
-    this.url = url;
-    this._data = [];
+    this.api = api;
 
-    this._savePromise = null;
-    // Callers can call _save() even when we're already saving, to queue another
+    this.loaded = api.load().then(notes => {
+      this._setData(decode(notes));
+    });
+
+    // Methods can call _save() even when we're already saving, to queue another
     // save. All subsequent calls to _save() (until the original save ends) will
     // share the same promise.
-    this._nextSavePromise = null;
-    this._isChangedSinceLastSave = null;
-
-    this._savePromise = null;
-
-    this.loaded = new Promise((resolve, reject) => {
-      const xhr = new XMLHttpRequest();
-      xhr.timeout = 30000;
-      xhr.onload = () => {
-        try {
-          this._setData(decode(xhr.responseText));
-          resolve(null);
-        } catch (e) {
-          this._setData([]);
-          reject(e);
-        }
-      };
-      xhr.onerror = function() {
-        reject(
-          new Error(
-            "Error loading XHR. Status " + xhr.status + " " + xhr.statusText
-          )
-        );
-      };
-      xhr.onabort = function() {
-        reject(new Error("Note request aborted"));
-      };
-      xhr.ontimeout = function() {
-        reject(new Error("Note request timed out"));
-      };
-      xhr.open("GET", this.url);
-      xhr.responseType = "text";
-      xhr.timeout = LOAD_TIMEOUT;
-      xhr.send(null);
-    });
+    this._lastSave = this.loaded;
+    this._nextSave = null;
   }
 
   /**
    * Schedules a save to the server and returns a Promise that resolves when
    * the save completes.
-   *
-   * If _save() is called without local changes, this is a no-op.
    *
    * If _save() is called while we're already saving, this queues another
    * save.
@@ -159,23 +146,25 @@ class NoteStore {
    * queued, both saves will be folded into one save which will begin when the
    * current save completes.
    */
-  _save() {
-    return this.loaded.then(() => {
-      if (!this._isChangedSinceLastSave) {
-        return this._savePromise || Promise.resolve(null);
-      }
+  async _save() {
+    if (this._nextSave !== null) {
+      // There's a save going on, and there's another save queued
+      // after it. Return the second save: it will save the latest
+      // data.
+      return this._nextSave;
+    }
 
-      if (this._savePromise !== null) {
-        if (this._nextSavePromise === null) {
-          this._nextSavePromise = this._savePromise.then(() => this._doSave());
-        } // otherwise it's already queued
+    if (this._lastSave !== null) {
+      // There's a save going on. Queue our save for after that one.
+      //
+      // Sets `this._nextSave`, to short-circuit future calls.
+      this._nextSave = this._lastSave.then(() => this._doSave());
+      return this._nextSave;
+    }
 
-        return this._nextSavePromise;
-      }
-
-      this._savePromise = this._doSave();
-      return this._savePromise;
-    });
+    // There's no other save going on ... _yet_.
+    this._lastSave = this._doSave();
+    return this._lastSave;
   }
 
   /**
@@ -184,47 +173,16 @@ class NoteStore {
    *
    * This is unsafe to call outside of _save() because it might lead to races.
    */
-  _doSave() {
-    this._isChangedSinceLastSave = false;
-
-    return new Promise((resolve, reject) => {
-      const end = (callback, ...args) => {
-        // Advance to _nextSavePromise. When we resolve(), it will begin.
-        // (See _save().)
-        this._savePromise = this._nextSavePromise;
-        this._nextSavePromise = null;
-        callback(...args);
-      };
-
-      const xhr = new XMLHttpRequest();
-      xhr.onload = function() {
-        if (Math.floor(xhr.status / 100) !== 2) {
-          end(
-            reject,
-            new Error(`Save failed: ${xhr.status} ${xhr.statusText}`)
-          );
-        } else {
-          end(resolve);
-        }
-      };
-      xhr.onerror = function(ev) {
-        end(
-          reject,
-          new Error("Save failed: " + xhr.status + " " + xhr.statusText)
-        );
-      };
-      xhr.ontimeout = function() {
-        end(reject, new Error("Save timed out"));
-      };
-      xhr.onabort = function() {
-        end(reject, new Error("Save aborted"));
-      };
-
-      xhr.timeout = SAVE_TIMEOUT;
-      xhr.open("PUT", this.url);
-      xhr.setRequestHeader("Content-Type", "application/json");
-      xhr.send(encode(this._data));
-    });
+  async _doSave() {
+    try {
+      await this.api.save(encode(this._data));
+    } catch (err) {
+      // _doSave() _must_ succeed -- otherwise the promise chain breaks
+      console.error(err);
+    }
+    this._lastSave = this._nextSave;
+    this._nextSave = null;
+    return null;
   }
 
   /**
@@ -251,25 +209,24 @@ class NoteStore {
    *
    * The returned Promise resolves when the save completes.
    */
-  add(note) {
-    return this.loaded.then(() => {
-      // If this pageIndex is the highest we've seen, add empty pages
-      for (let i = this._data.length - 1, ii = note.pageIndex; i < ii; i++) {
-        this._data.push([]);
-      }
+  async add(note) {
+    await (this._nextSave || this._lastSave || this.loaded);
 
-      // Store the exact Object we were given. That way, the caller can
-      // deleteNote() with the same handle the called addNote() with.
-      this._data[note.pageIndex].push(note);
+    // If this pageIndex is the highest we've seen, add empty pages
+    for (let i = this._data.length - 1, ii = note.pageIndex; i < ii; i++) {
+      this._data.push([]);
+    }
 
-      // Keep list sorted.
-      // [adam] Obviously .splice() would be better, but I'm lazy.
-      this._data[note.pageIndex].sort(compareNotes);
+    // Store the exact Object we were given. That way, the caller can
+    // deleteNote() with the same handle the called addNote() with.
+    this._data[note.pageIndex].push(note);
 
-      this.eventBus.dispatch("noteschanged");
-      this._isChangedSinceLastSave = true;
-      return this._save();
-    });
+    // Keep list sorted.
+    // [adam] Obviously .splice() would be better, but I'm lazy.
+    this._data[note.pageIndex].sort(compareNotes);
+
+    this.eventBus.dispatch("noteschanged");
+    return this._save();
   }
 
   /**
@@ -342,21 +299,20 @@ class NoteStore {
    *
    * The returned Promise resolves when the save completes.
    */
-  deleteNote(note) {
-    return this.loaded.then(() => {
-      const arr = this._data[note.pageIndex];
-      const index = arr.indexOf(note);
+  async deleteNote(note) {
+    await (this._nextSave || this._lastSave || this.loaded);
 
-      if (index === -1) {
-        return Promise.resolve(null); // it's already deleted
-      }
+    const arr = this._data[note.pageIndex];
+    const index = arr.indexOf(note);
 
-      arr.splice(index, 1);
+    if (index === -1) {
+      return null; // it's already deleted
+    }
 
-      this.eventBus.dispatch("noteschanged");
-      this._isChangedSinceLastSave = true;
-      return this._save();
-    });
+    arr.splice(index, 1);
+
+    this.eventBus.dispatch("noteschanged");
+    return this._save();
   }
 
   /**
@@ -364,15 +320,14 @@ class NoteStore {
    *
    * The returned Promise resolves when the save completes.
    */
-  setNoteText(note, text) {
-    return this.loaded.then(() => {
-      note.text = text;
+  async setNoteText(note, text) {
+    await (this._nextSave || this._lastSave || this.loaded);
 
-      this._data[note.pageIndex].sort(compareNotes); // Wild edge case
-      this.eventBus.dispatch("noteschanged");
-      this._isChangedSinceLastSave = true;
-      return this._save();
-    });
+    note.text = text;
+
+    this._data[note.pageIndex].sort(compareNotes); // Wild edge case
+    this.eventBus.dispatch("noteschanged");
+    return this._save();
   }
 }
 

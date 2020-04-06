@@ -137,6 +137,8 @@ const PDFViewerApplication = {
   pdfDocument: null,
   pdfLoadingTask: null,
   printService: null,
+  /** @type {NoteStoreApiCreator} */
+  noteStoreApiCreator: null,
   /** @type {PDFViewer} */
   pdfViewer: null,
   /** @type {PDFThumbnailViewer} */
@@ -381,6 +383,7 @@ const PDFViewerApplication = {
       linkService: pdfLinkService,
       downloadManager,
       findController,
+      noteStoreApiCreator: this.noteStoreApiCreator,
       renderer: AppOptions.get("renderer"),
       enableWebGL: AppOptions.get("enableWebGL"),
       l10n: this.l10n,
