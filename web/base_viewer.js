@@ -420,12 +420,14 @@ class BaseViewer {
     const pagesCount = pdfDocument.numPages;
     const firstPagePromise = pdfDocument.getPage(1);
 
-    const noteStore = url
-      ? new NoteStore({
-          eventBus: this.eventBus,
-          api: this.noteStoreApiCreator(url),
-        })
-      : null;
+    const noteStore =
+      url && this.noteStoreApiCreator
+        ? new NoteStore({
+            eventBus: this.eventBus,
+            apiCreator: this.noteStoreApiCreator,
+            pdfUrl: url,
+          })
+        : null;
 
     this._pagesCapability.promise.then(() => {
       this.eventBus.dispatch("pagesloaded", {

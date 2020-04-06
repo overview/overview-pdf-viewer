@@ -81,7 +81,7 @@ function compareNotes(a, b) {
  *
  * Supply something like this:
  *
- *     const noteStoreApiCreator = (pdfUrl) => {
+ *     const noteStoreApiCreator = (pdfUrl, { onChange }) => {
  *         const apiUrl = pdfUrl.replace(/.pdf$/, "/notes.json");
  *         return {
  *             async load() {
@@ -94,22 +94,22 @@ function compareNotes(a, b) {
  *                     { method: "PUT", body: JSON.stringify(notes) },
  *                 );
  *             }
+ *         };
+ *
+ *         // and maybe call `onChange(notes)` whenever we see (asynchronously)
+ *         // that notes have changed.
  *     });
- */
-
-/**
- * @typedef {Object} NoteStoreApi
  *
- * A caller-supplied API for accessing a document's notes.
- *
- * @property {Function} async load() - return all notes from server.
- * @property {Function} async save(notes) - save all notes to the server.
+ * NoteStore will never call the API's save() twice at a time. It will wait for
+ * the first call to return before calling a second time. It will also recover
+ * from Promise rejections (Errors).
  */
 
 /**
  * @typedef {Object} NoteStoreOptions
  * @property {EventBus} eventBus - The application event bus.
- * @property {NoteStoreApi} api - The note-storage logic.
+ * @property {NoteStoreApi} apiCreator - The note-storage logic.
+ * @property {String} pdfUrl - The PDF URL (used to instantiate `api`).
  */
 
 /*
@@ -120,11 +120,13 @@ class NoteStore {
    * @constructs NoteStore
    * @param {NoteStoreOptions} options
    */
-  constructor({ eventBus, api }) {
+  constructor({ eventBus, apiCreator, pdfUrl }) {
     this.eventBus = eventBus;
-    this.api = api;
+    this.api = apiCreator(pdfUrl, {
+      onChange: notes => this._setData(decode(notes)),
+    });
 
-    this.loaded = api.load().then(notes => {
+    this.loaded = this.api.load().then(notes => {
       this._setData(decode(notes));
     });
 
