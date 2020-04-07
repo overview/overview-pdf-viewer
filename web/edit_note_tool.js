@@ -231,7 +231,7 @@ class EditNoteTool {
   }
 
   get noteStore() {
-    const pageView = this.pdfViewer.getPageView(1);
+    const pageView = this.pdfViewer.getPageView(0);
     if (!pageView) {
       return null;
     }
