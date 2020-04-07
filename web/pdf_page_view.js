@@ -310,6 +310,9 @@ class PDFPageView {
       this.annotationLayer.cancel();
       this.annotationLayer = null;
     }
+    if (this.noteLayer) {
+      this.noteLayer = null;
+    }
   }
 
   cssTransform(target, redrawAnnotations = false) {
