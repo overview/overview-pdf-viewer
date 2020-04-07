@@ -480,7 +480,9 @@ class BaseViewer {
             textLayerFactory,
             textLayerMode: this.textLayerMode,
             annotationLayerFactory: this,
-            noteLayerFactory: new NoteLayerFactory(noteStore),
+            noteLayerFactory: noteStore
+              ? new NoteLayerFactory(noteStore)
+              : null,
             imageResourcesPath: this.imageResourcesPath,
             renderInteractiveForms: this.renderInteractiveForms,
             renderer: this.renderer,

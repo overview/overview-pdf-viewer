@@ -174,6 +174,14 @@ class Toolbar {
       this._adjustScaleWidth();
       this._updateUIState(true);
     });
+
+    this.eventBus._on("documentloaded", () => {
+      const notesDisabled =
+        window.PDFViewerApplication.noteStoreApiCreator === null;
+      this.items.addNote.disabled = notesDisabled;
+      this.items.nextNote.disabled = notesDisabled;
+      this.items.previousNote.disabled = notesDisabled;
+    });
   }
 
   _bindAddNoteListener() {

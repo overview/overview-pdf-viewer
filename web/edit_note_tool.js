@@ -235,7 +235,9 @@ class EditNoteTool {
     if (!pageView) {
       return null;
     }
-    return pageView.noteLayerFactory.noteStore;
+    return pageView.noteLayerFactory
+      ? pageView.noteLayerFactory.noteStore
+      : null;
   }
 
   moveToPrevious() {
