@@ -918,17 +918,19 @@ html[dir="rtl"] #viewOutline.toolbarButton::before {
 }
 
 html[dir='ltr'] #toolbarPages > * > * {
+  display: inline-block;
   position: relative;
   float: left;
 }
 
 html[dir='rtl'] #toolbarPages > * > * {
+  display: inline-block;
   position: relative;
   float: right;
 }
 
 #toolbarPages .toolbarPagesFullDocument {
-  display: contents;
+  display: block;
 }
 
 #toolbarPages .toolbarPagesPartialDocument {
@@ -940,7 +942,8 @@ html[dir='rtl'] #toolbarPages > * > * {
 }
 
 #toolbarPages.viewingPartialDocument .toolbarPagesPartialDocument {
-  display: contents;
+  display: block;
+  margin: 0 4px;
 }
 
 #toolbarPages .toolbarButton.loadFullDocument  {
