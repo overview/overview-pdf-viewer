@@ -720,8 +720,11 @@ const PDFViewerApplication = {
    * Opens PDF document specified by URL or array with additional arguments.
    * @param {string|TypedArray|ArrayBuffer} file - PDF location or binary data.
    * @param {Object} [args] - Additional arguments for the getDocument call,
-   *                          e.g. HTTP headers ('httpHeaders') or alternative
-   *                          data transport ('range').
+   *                          e.g. HTTP headers ('httpHeaders'), alternative
+   *                          data transport ('range'), or metadata about the
+   *                          fact that this is a partial document
+   *                          ('fullDocumentInfo' with pageNumber, nPages, url,
+   *                          and partialUrl if 'file' is the fullUrl)
    * @returns {Promise} - Returns the promise, which is resolved when document
    *                      is opened.
    */
@@ -792,7 +795,7 @@ const PDFViewerApplication = {
 
     return loadingTask.promise.then(
       pdfDocument => {
-        this.load(pdfDocument);
+        this.load(pdfDocument, (args || {}).fullDocumentInfo || null);
       },
       exception => {
         if (loadingTask !== this.pdfLoadingTask) {
@@ -1030,8 +1033,9 @@ const PDFViewerApplication = {
     }
   },
 
-  load(pdfDocument) {
+  load(pdfDocument, fullDocumentInfo) {
     this.pdfDocument = pdfDocument;
+    this.fullDocumentInfo = fullDocumentInfo;
 
     pdfDocument.getDownloadInfo().then(() => {
       this.downloadComplete = true;
@@ -1057,6 +1061,7 @@ const PDFViewerApplication = {
     });
 
     this.toolbar.setPagesCount(pdfDocument.numPages, false);
+    this.toolbar.setFullDocumentInfo(fullDocumentInfo);
     this.secondaryToolbar.setPagesCount(pdfDocument.numPages);
 
     const store = (this.store = new ViewHistory(pdfDocument.fingerprint));
@@ -1073,7 +1078,7 @@ const PDFViewerApplication = {
     this.pdfDocumentProperties.setDocument(pdfDocument, this.url);
 
     const pdfViewer = this.pdfViewer;
-    pdfViewer.setDocument(pdfDocument, this.url);
+    pdfViewer.setDocument(pdfDocument, this.url, fullDocumentInfo);
     const { firstPagePromise, onePageRendered, pagesPromise } = pdfViewer;
 
     const pdfThumbnailViewer = this.pdfThumbnailViewer;
@@ -1645,6 +1650,7 @@ const PDFViewerApplication = {
     eventBus._on("lastpage", webViewerLastPage);
     eventBus._on("nextpage", webViewerNextPage);
     eventBus._on("previouspage", webViewerPreviousPage);
+    eventBus._on("loadfulldocument", webViewerLoadFullDocument);
     eventBus._on("zoomin", webViewerZoomIn);
     eventBus._on("zoomout", webViewerZoomOut);
     eventBus._on("zoomreset", webViewerZoomReset);
@@ -1720,6 +1726,7 @@ const PDFViewerApplication = {
     eventBus._off("lastpage", webViewerLastPage);
     eventBus._off("nextpage", webViewerNextPage);
     eventBus._off("previouspage", webViewerPreviousPage);
+    eventBus._off("loadfulldocument", webViewerLoadFullDocument);
     eventBus._off("zoomin", webViewerZoomIn);
     eventBus._off("zoomout", webViewerZoomOut);
     eventBus._off("zoomreset", webViewerZoomReset);
@@ -1828,11 +1835,23 @@ function loadAndEnablePDFBug(enabledTabs) {
 function webViewerInitialized() {
   const appConfig = PDFViewerApplication.appConfig;
   let file;
+  let fullDocumentInfo = null;
   if (typeof PDFJSDev === "undefined" || PDFJSDev.test("GENERIC")) {
     const queryString = document.location.search.substring(1);
     const params = parseQueryString(queryString);
     file = "file" in params ? params.file : AppOptions.get("defaultUrl");
     validateFileURL(file);
+    if (
+      params["fulldocumentinfo.npages"] &&
+      params["fulldocumentinfo.pagenumber"] &&
+      params["fulldocumentinfo.url"]
+    ) {
+      fullDocumentInfo = {
+        nPages: parseFloat(params["fulldocumentinfo.npages"]),
+        pageNumber: parseFloat(params["fulldocumentinfo.pagenumber"]),
+        url: params["fulldocumentinfo.url"],
+      };
+    }
   } else if (PDFJSDev.test("MOZCENTRAL")) {
     file = window.location.href.split("#")[0];
   } else if (PDFJSDev.test("CHROME")) {
@@ -1935,7 +1954,7 @@ function webViewerInitialized() {
   );
 
   try {
-    webViewerOpenFileViaURL(file);
+    webViewerOpenFileViaURL(file, { fullDocumentInfo });
   } catch (reason) {
     PDFViewerApplication.l10n
       .get("loading_error", null, "An error occurred while loading the PDF.")
@@ -1947,7 +1966,7 @@ function webViewerInitialized() {
 
 let webViewerOpenFileViaURL;
 if (typeof PDFJSDev === "undefined" || PDFJSDev.test("GENERIC")) {
-  webViewerOpenFileViaURL = function(file) {
+  webViewerOpenFileViaURL = function(file, args) {
     if (file && file.lastIndexOf("file:", 0) === 0) {
       // file:-scheme. Load the contents in the main thread because QtWebKit
       // cannot load file:-URLs in a Web Worker. file:-URLs are usually loaded
@@ -1964,7 +1983,7 @@ if (typeof PDFJSDev === "undefined" || PDFJSDev.test("GENERIC")) {
     }
 
     if (file) {
-      PDFViewerApplication.open(file);
+      PDFViewerApplication.open(file, args);
     }
   };
 } else if (PDFJSDev.test("MOZCENTRAL || CHROME")) {
@@ -2246,6 +2265,22 @@ function webViewerNextPage() {
 }
 function webViewerPreviousPage() {
   PDFViewerApplication.page--;
+}
+function webViewerLoadFullDocument() {
+  const { fullDocumentInfo, pdfViewer } = PDFViewerApplication;
+  const { pageNumber, url } = fullDocumentInfo;
+  const { _location } = pdfViewer;
+  const hash = _location.pdfOpenParams.slice(1);
+  PDFViewerApplication.initialRotation = _location.rotation;
+  PDFViewerApplication.initialBookmark = hash.replace(
+    /page=\d+/,
+    `page=${pageNumber}`
+  );
+  PDFViewerApplication.open(url, {
+    fullDocumentInfo: Object.assign(fullDocumentInfo, {
+      partialUrl: PDFViewerApplication.pdfDocument._transport._params.url,
+    }),
+  });
 }
 function webViewerZoomIn() {
   PDFViewerApplication.zoomIn();

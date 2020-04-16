@@ -403,7 +403,7 @@ class BaseViewer {
   /**
    * @param pdfDocument {PDFDocument}
    */
-  setDocument(pdfDocument, url) {
+  setDocument(pdfDocument, url, fullDocumentInfo) {
     if (this.pdfDocument) {
       this._cancelRendering();
       this._resetView();
@@ -420,14 +420,21 @@ class BaseViewer {
     const pagesCount = pdfDocument.numPages;
     const firstPagePromise = pdfDocument.getPage(1);
 
-    const noteStore =
-      url && this.noteStoreApiCreator
-        ? new NoteStore({
-            eventBus: this.eventBus,
-            apiCreator: this.noteStoreApiCreator,
-            pdfUrl: url,
-          })
-        : null;
+    this.noteStore = null;
+    if (url && this.noteStoreApiCreator) {
+      let focusPageNumber = null;
+      let pdfUrl = url;
+      if (fullDocumentInfo && pagesCount > 1) {
+        focusPageNumber = fullDocumentInfo.pageNumber;
+        pdfUrl = fullDocumentInfo.partialUrl;
+      }
+      this.noteStore = new NoteStore({
+        eventBus: this.eventBus,
+        apiCreator: this.noteStoreApiCreator,
+        focusPageNumber,
+        pdfUrl,
+      });
+    }
 
     this._pagesCapability.promise.then(() => {
       this.eventBus.dispatch("pagesloaded", {
@@ -470,6 +477,14 @@ class BaseViewer {
           this.textLayerMode !== TextLayerMode.DISABLE ? this : null;
 
         for (let pageNum = 1; pageNum <= pagesCount; ++pageNum) {
+          let noteLayerFactory = null;
+          if (this.noteStore) {
+            const { focusPageNumber } = this.noteStore;
+            if (focusPageNumber === null || focusPageNumber === pageNum) {
+              noteLayerFactory = new NoteLayerFactory(this.noteStore);
+            }
+          }
+
           const pageView = new PDFPageView({
             container: this._setDocumentViewerElement,
             eventBus: this.eventBus,
@@ -480,9 +495,7 @@ class BaseViewer {
             textLayerFactory,
             textLayerMode: this.textLayerMode,
             annotationLayerFactory: this,
-            noteLayerFactory: noteStore
-              ? new NoteLayerFactory(noteStore)
-              : null,
+            noteLayerFactory,
             imageResourcesPath: this.imageResourcesPath,
             renderInteractiveForms: this.renderInteractiveForms,
             renderer: this.renderer,

@@ -70,6 +70,9 @@ function getViewerConfiguration() {
       customScaleOption: document.getElementById("customScaleOption"),
       previous: document.getElementById("previous"),
       next: document.getElementById("next"),
+      pagesContainer: document.getElementById("toolbarPages"),
+      fullDocumentInfo: document.getElementById("fullDocumentInfo"),
+      loadFullDocument: document.getElementById("loadFullDocument"),
       zoomIn: document.getElementById("zoomIn"),
       zoomOut: document.getElementById("zoomOut"),
       viewFind: document.getElementById("viewFind"),
@@ -207,10 +210,15 @@ function webViewerLoad() {
           "/notes"
         );
 
+        const focusPage = window.PDFViewerApplication.noteStore
+          ? window.PDFViewerApplication.noteStore.focusPageNumber
+          : null;
+        const lastPageIndex = window.PDFViewerApplication.pagesCount - 1;
+
         const load = async () => {
           return [
             {
-              pageIndex: 2,
+              pageIndex: Math.min(lastPageIndex, focusPage ? focusPage - 1 : 2),
               x: 72,
               y: 144,
               width: 200,
@@ -218,7 +226,7 @@ function webViewerLoad() {
               text: "Hi there",
             },
             {
-              pageIndex: 4,
+              pageIndex: Math.min(lastPageIndex, focusPage ? focusPage - 1 : 4),
               x: 144,
               y: 400,
               width: 300,
@@ -245,6 +253,12 @@ function webViewerLoad() {
         return { load, save };
       };
       app.PDFViewerApplication.noteStoreApiCreator = fakeNoteStoreCreator;
+
+      // [Overview-specific] Set isViewerEmbedded. PDF.js disables history
+      // when running as embedded; and in Overview, we're _always_
+      // embedded.
+      app.PDFViewerApplication.isViewerEmbedded = true;
+
       app.PDFViewerApplication.run(config);
     });
   } else {

@@ -231,13 +231,7 @@ class EditNoteTool {
   }
 
   get noteStore() {
-    const pageView = this.pdfViewer.getPageView(0);
-    if (!pageView) {
-      return null;
-    }
-    return pageView.noteLayerFactory
-      ? pageView.noteLayerFactory.noteStore
-      : null;
+    return this.pdfViewer.noteStore;
   }
 
   moveToPrevious() {

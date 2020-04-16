@@ -39,8 +39,14 @@ const SCALE_SELECT_WIDTH = 162; // px
  * @property {HTMLSelectElement} scaleSelect - Scale selection control.
  * @property {HTMLOptionElement} customScaleOption - The item used to display
  *   a non-predefined scale.
+ * @property {HTMLDivElement} pagesContainer - switcher between buttons and
+ *   fullDocumentInfo.
  * @property {HTMLButtonElement} previous - Button to go to the previous page.
  * @property {HTMLButtonElement} next - Button to go to the next page.
+ * @property {HTMLSpanElement} fullDocumentInfo - Label that displays page
+ *   number and number of pages in the "full" (as opposed to "partial")
+ *   document.
+ * @property {HTMLButtonElement} loadFullDocument - Button to load all pages.
  * @property {HTMLButtonElement} zoomIn - Button to zoom in the pages.
  * @property {HTMLButtonElement} zoomOut - Button to zoom out the pages.
  * @property {HTMLButtonElement} viewFind - Button to open find bar.
@@ -68,6 +74,7 @@ class Toolbar {
     this.buttons = [
       { element: options.previous, eventName: "previouspage" },
       { element: options.next, eventName: "nextpage" },
+      { element: options.loadFullDocument, eventName: "loadfulldocument" },
       { element: options.zoomIn, eventName: "zoomin" },
       { element: options.zoomOut, eventName: "zoomout" },
       { element: options.openFile, eventName: "openfile" },
@@ -88,8 +95,11 @@ class Toolbar {
       scaleSelectContainer: options.scaleSelectContainer,
       scaleSelect: options.scaleSelect,
       customScaleOption: options.customScaleOption,
+      pagesContainer: options.pagesContainer,
       previous: options.previous,
       next: options.next,
+      fullDocumentInfo: options.fullDocumentInfo,
+      loadFullDocument: options.loadFullDocument,
       zoomIn: options.zoomIn,
       zoomOut: options.zoomOut,
       addNote: options.addNote,
@@ -111,6 +121,11 @@ class Toolbar {
     this._updateUIState(false);
   }
 
+  setFullDocumentInfo(fullDocumentInfo) {
+    this.fullDocumentInfo = fullDocumentInfo;
+    this._updateUIState(true);
+  }
+
   setPagesCount(pagesCount, hasPageLabels) {
     this.pagesCount = pagesCount;
     this.hasPageLabels = hasPageLabels;
@@ -127,6 +142,7 @@ class Toolbar {
     this.pageNumber = 0;
     this.pageLabel = null;
     this.hasPageLabels = false;
+    this.fullDocumentInfo = null;
     this.pagesCount = 0;
     this.pageScaleValue = DEFAULT_SCALE_VALUE;
     this.pageScale = DEFAULT_SCALE;
@@ -210,7 +226,14 @@ class Toolbar {
       // Don't update the UI state until we localize the toolbar.
       return;
     }
-    const { pageNumber, pagesCount, pageScaleValue, pageScale, items } = this;
+    const {
+      fullDocumentInfo,
+      pageNumber,
+      pagesCount,
+      pageScaleValue,
+      pageScale,
+      items,
+    } = this;
 
     if (resetNumPages) {
       if (this.hasPageLabels) {
@@ -224,6 +247,13 @@ class Toolbar {
           });
       }
       items.pageNumber.max = pagesCount;
+
+      if (fullDocumentInfo && pagesCount === 1) {
+        items.pagesContainer.classList.add("viewingPartialDocument");
+        items.fullDocumentInfo.textContent = `${fullDocumentInfo.pageNumber} of ${fullDocumentInfo.nPages}`;
+      } else {
+        items.pagesContainer.classList.remove("viewingPartialDocument");
+      }
     }
 
     if (this.hasPageLabels) {

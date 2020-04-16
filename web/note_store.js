@@ -109,6 +109,11 @@ function compareNotes(a, b) {
  * @typedef {Object} NoteStoreOptions
  * @property {EventBus} eventBus - The application event bus.
  * @property {NoteStoreApi} apiCreator - The note-storage logic.
+ * @property {Number} focusPageNumber - null; or if set, all notes must
+ *   have pageNumber={focusPageNumber}, and they will be _saved_ as having
+ *   pageNumber=1. (This supports Overview's "partial document" vs "full
+ *   document" concept: when viewing the full document, notes must all be
+ *   written to the partial document.)
  * @property {String} pdfUrl - The PDF URL (used to instantiate `api`).
  */
 
@@ -120,14 +125,15 @@ class NoteStore {
    * @constructs NoteStore
    * @param {NoteStoreOptions} options
    */
-  constructor({ eventBus, apiCreator, pdfUrl }) {
+  constructor({ eventBus, apiCreator, focusPageNumber, pdfUrl }) {
     this.eventBus = eventBus;
+    this.focusPageNumber = focusPageNumber;
     this.api = apiCreator(pdfUrl, {
-      onChange: notes => this._setData(decode(notes)),
+      onChange: notes => this._setData(this.decode(notes)),
     });
 
     this.loaded = this.api.load().then(notes => {
-      this._setData(decode(notes));
+      this._setData(this.decode(notes));
     });
 
     // Methods can call _save() even when we're already saving, to queue another
@@ -177,7 +183,7 @@ class NoteStore {
    */
   async _doSave() {
     try {
-      await this.api.save(encode(this._data));
+      await this.api.save(this.encode(this._data));
     } catch (err) {
       // _doSave() _must_ succeed -- otherwise the promise chain breaks
       console.error(err);
@@ -330,6 +336,29 @@ class NoteStore {
     this._data[note.pageIndex].sort(compareNotes); // Wild edge case
     this.eventBus.dispatch("noteschanged");
     return this._save();
+  }
+
+  /**
+   * @private
+   */
+  decode(arr) {
+    if (this.focusPageNumber) {
+      arr = arr.map(note =>
+        Object.assign(note, { pageIndex: this.focusPageNumber - 1 })
+      );
+    }
+    return decode(arr);
+  }
+
+  /**
+   * @private
+   */
+  encode(notes) {
+    let arr = encode(notes);
+    if (this.focusPageNumber) {
+      arr = arr.map(note => Object.assign(note, { pageIndex: 0 }));
+    }
+    return arr;
   }
 }
 
