@@ -12,6 +12,9 @@ because:
   a third the size of the browser tab.)
 * Overview doesn't want to distract the user with endless PDF-viewing features.
 
+The "open/close sidebar" toggle in the toolbar is hidden, but the feature still
+exists. Overview presents its own interface for toggling sidebar visibility.
+
 ## PDF Notes
 
 Given a `noteStoreApiCreator` function, exposes a note-creation interface:
@@ -41,7 +44,7 @@ being at `arguments[1].fullDocumentInfo.url`.
 # Set up a dev environment
 
 1. `npm install`
-2. `node_modules/.bin/gulp dist` # generates some locale files, among other things
+2. `node_modules/.bin/gulp generic` # generates some locale files, among other things
 3. `node_modules/.bin/gulp server`
 
 ## Dev loop (combined with Overview)
@@ -55,9 +58,9 @@ loop tighter.
    them.)
 3. Add a new feature, accessible in a URL-only fashion.
 4. Test at http://localhost:8888/web/viewer.html?file=/web/compressed.tracemonkey-pldi-09.pdf
-5. `node_modules/.bin/gulp dist`
+5. `node_modules/.bin/gulp generic`
 6. Test at http://localhost:8888/build/generic/web/viewer.html?file=/web/compressed.tracemonkey-pldi-09.pdf
-7. Bring in to local Overview (relies on the `gulp dist` above):
+7. Bring in to local Overview (relies on the `gulp generic` above):
    `(cd /path/to/overview-server && auto/refresh-pdfjs.py /path/to/overview-pdf-viewer/)`
 8. Test in Overview (in its `./dev` server)
 
